@@ -30,7 +30,7 @@ const Home: React.FC = () => {
       icon: Search,
       link: '/track-ticket',
       color: 'bg-success-500',
-      loginRequired: false,
+      loginRequired: true,
     },
     {
       title: 'Browse Knowledge Base',
