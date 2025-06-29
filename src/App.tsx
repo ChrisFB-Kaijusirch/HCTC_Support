@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
-import Home from './pages/Home.simple';
+import Home from './pages/Home';
 import SubmitTicket from './pages/SubmitTicket';
 import TrackTicket from './pages/TrackTicket';
 import KnowledgeBase from './pages/KnowledgeBase';
@@ -29,10 +29,38 @@ function App() {
   return (
     <Router basename="/HCTC_Support">
       <Layout>
-        <div style={{ background: 'red', padding: '20px', color: 'white', margin: '20px' }}>
-          DEBUG: Layout children are rendering - Current URL: {window.location.pathname}
-        </div>
-        <Home />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/submit-ticket" element={<SubmitTicket />} />
+          <Route path="/track-ticket" element={<TrackTicket />} />
+          <Route path="/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/knowledge-base/:id" element={<KnowledgeBaseArticle />} />
+          <Route path="/feature-requests" element={<FeatureRequestsList />} />
+          
+          {/* Auth Routes */}
+          <Route 
+            path="/admin/login" 
+            element={<LoginForm userType="admin" onLogin={handleLogin} />} 
+          />
+          <Route 
+            path="/client/login" 
+            element={<LoginForm userType="client" onLogin={handleLogin} />} 
+          />
+          <Route path="/qr-setup" element={<QRSetup />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/clients" element={<ClientManagement />} />
+          <Route path="/admin/apps" element={<AppManagement />} />
+          <Route path="/admin/content" element={<ContentManagement />} />
+          <Route path="/admin/invoices" element={<InvoiceManagement />} />
+          
+          {/* Client Routes */}
+          <Route path="/client/dashboard" element={<ClientDashboard />} />
+          <Route path="/client/users" element={<UserManagement />} />
+          <Route path="/client/billing" element={<Billing />} />
+        </Routes>
       </Layout>
     </Router>
   );
