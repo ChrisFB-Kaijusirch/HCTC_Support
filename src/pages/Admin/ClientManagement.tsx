@@ -115,7 +115,7 @@ const ClientManagement: React.FC = () => {
       const clientId = editingClient?.id || `client_${Date.now()}`;
       
       // Generate QR code for new clients or when updating client info
-      const qrCodeData = generateClientQRCode({
+      const qrCodeData = await generateClientQRCode({
         clientId,
         companyName: formData.companyName,
         contactName: formData.contactName,
@@ -125,7 +125,8 @@ const ClientManagement: React.FC = () => {
       if (editingClient) {
         await updateClient(editingClient.id, {
           ...formData,
-          qrCode: qrCodeData.qrCode, // Update QR code with new info
+          qrCode: qrCodeData.qrCode,
+          qrCodeData: qrCodeData,
         });
       } else {
         await createClient({
@@ -133,9 +134,12 @@ const ClientManagement: React.FC = () => {
           id: clientId,
           registrationDate: new Date().toISOString(),
           qrCode: qrCodeData.qrCode,
+          qrCodeData: qrCodeData,
           lastActivity: new Date().toISOString(),
           totalTickets: 0,
           totalFeatureRequests: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
       }
       
@@ -178,6 +182,7 @@ const ClientManagement: React.FC = () => {
     try {
       await updateClient(clientId, {
         qrCode: newQRCodeData.qrCode,
+        qrCodeData: newQRCodeData,
       });
       // Refresh the client data to show the new QR code
     } catch (error) {
@@ -186,13 +191,14 @@ const ClientManagement: React.FC = () => {
   };
 
   const getClientQRCodeData = (client: Client): QRCodeData => {
-    return {
+    return client.qrCodeData || {
       clientId: client.id,
       companyName: client.companyName,
       contactName: client.contactName,
       email: client.email,
       qrCode: client.qrCode,
       generatedAt: client.registrationDate,
+      isValid: true,
     };
   };
 
@@ -393,7 +399,7 @@ const ClientManagement: React.FC = () => {
               <p className="text-sm text-blue-800">
                 {editingClient 
                   ? 'Saving changes will update the client\'s QR code with the new information.'
-                  : 'A unique QR code will be automatically generated for this client upon creation. This QR code can be sent to the client for secure account setup.'
+                  : 'A unique QR code will be automatically generated for this client upon creation. This QR code can be sent to the client for secure account setup with multi-user management.'
                 }
               </p>
             </div>

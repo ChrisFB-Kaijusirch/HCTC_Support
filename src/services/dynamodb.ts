@@ -15,7 +15,9 @@ import {
   KnowledgeBaseArticle, 
   User,
   RecentUpdate,
-  PopularTopic
+  PopularTopic,
+  Invoice,
+  QRCodeData
 } from '../types';
 
 // Fallback to mock data if AWS is not configured
@@ -243,9 +245,91 @@ class DynamoDBService {
     return this.scan<KnowledgeBaseArticle>(TABLE_NAMES.KNOWLEDGE_BASE);
   }
 
+  // User operations
+  async createUser(user: User): Promise<User> {
+    return this.create(TABLE_NAMES.USERS, {
+      ...user,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getUser(userId: string): Promise<User | null> {
+    return this.get<User>(TABLE_NAMES.USERS, { id: userId });
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return this.scan<User>(TABLE_NAMES.USERS);
+  }
+
+  async getUsersByClientId(clientId: string): Promise<User[]> {
+    const allUsers = await this.getAllUsers();
+    return allUsers.filter(user => user.clientId === clientId);
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    return this.update(TABLE_NAMES.USERS, { id: userId }, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    return this.delete(TABLE_NAMES.USERS, { id: userId });
+  }
+
+  // QR Code operations
+  async createQRCode(qrCodeData: QRCodeData): Promise<QRCodeData> {
+    return this.create(TABLE_NAMES.QR_CODES, {
+      ...qrCodeData,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  async getQRCode(qrCode: string): Promise<QRCodeData | null> {
+    return this.get<QRCodeData>(TABLE_NAMES.QR_CODES, { qrCode });
+  }
+
+  async validateQRCode(qrCode: string): Promise<QRCodeData | null> {
+    const qrCodeData = await this.getQRCode(qrCode);
+    if (!qrCodeData) return null;
+
+    // Check if QR code is still valid (not expired)
+    if (qrCodeData.expiresAt && new Date() > new Date(qrCodeData.expiresAt)) {
+      return null;
+    }
+
+    return qrCodeData;
+  }
+
+  // Invoice operations
+  async createInvoice(invoice: Invoice): Promise<Invoice> {
+    return this.create(TABLE_NAMES.INVOICES, {
+      ...invoice,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  async getInvoice(invoiceId: string): Promise<Invoice | null> {
+    return this.get<Invoice>(TABLE_NAMES.INVOICES, { id: invoiceId });
+  }
+
+  async getAllInvoices(): Promise<Invoice[]> {
+    return this.scan<Invoice>(TABLE_NAMES.INVOICES);
+  }
+
+  async getInvoicesByClientId(clientId: string): Promise<Invoice[]> {
+    const allInvoices = await this.getAllInvoices();
+    return allInvoices.filter(invoice => invoice.clientId === clientId);
+  }
+
+  async updateInvoice(invoiceId: string, updates: Partial<Invoice>): Promise<Invoice> {
+    return this.update(TABLE_NAMES.INVOICES, { id: invoiceId }, updates);
+  }
+
   // Content Management operations
   async createRecentUpdate(update: RecentUpdate): Promise<RecentUpdate> {
-    return this.create('holdings-ctc-recent-updates', {
+    return this.create(TABLE_NAMES.RECENT_UPDATES, {
       ...update,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -253,22 +337,22 @@ class DynamoDBService {
   }
 
   async getAllRecentUpdates(): Promise<RecentUpdate[]> {
-    return this.scan<RecentUpdate>('holdings-ctc-recent-updates');
+    return this.scan<RecentUpdate>(TABLE_NAMES.RECENT_UPDATES);
   }
 
   async updateRecentUpdate(updateId: string, updates: Partial<RecentUpdate>): Promise<RecentUpdate> {
-    return this.update('holdings-ctc-recent-updates', { id: updateId }, {
+    return this.update(TABLE_NAMES.RECENT_UPDATES, { id: updateId }, {
       ...updates,
       updatedAt: new Date().toISOString(),
     });
   }
 
   async deleteRecentUpdate(updateId: string): Promise<void> {
-    return this.delete('holdings-ctc-recent-updates', { id: updateId });
+    return this.delete(TABLE_NAMES.RECENT_UPDATES, { id: updateId });
   }
 
   async createPopularTopic(topic: PopularTopic): Promise<PopularTopic> {
-    return this.create('holdings-ctc-popular-topics', {
+    return this.create(TABLE_NAMES.POPULAR_TOPICS, {
       ...topic,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -276,18 +360,18 @@ class DynamoDBService {
   }
 
   async getAllPopularTopics(): Promise<PopularTopic[]> {
-    return this.scan<PopularTopic>('holdings-ctc-popular-topics');
+    return this.scan<PopularTopic>(TABLE_NAMES.POPULAR_TOPICS);
   }
 
   async updatePopularTopic(topicId: string, updates: Partial<PopularTopic>): Promise<PopularTopic> {
-    return this.update('holdings-ctc-popular-topics', { id: topicId }, {
+    return this.update(TABLE_NAMES.POPULAR_TOPICS, { id: topicId }, {
       ...updates,
       updatedAt: new Date().toISOString(),
     });
   }
 
   async deletePopularTopic(topicId: string): Promise<void> {
-    return this.delete('holdings-ctc-popular-topics', { id: topicId });
+    return this.delete(TABLE_NAMES.POPULAR_TOPICS, { id: topicId });
   }
 }
 

@@ -12,8 +12,8 @@ export interface Ticket {
   subject: string;
   description: string;
   attachments?: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   assignedTo?: string;
   replies: TicketReply[];
   internalNotes: InternalNote[];
@@ -25,7 +25,7 @@ export interface TicketReply {
   author: string;
   authorType: 'client' | 'admin';
   message: string;
-  createdAt: Date;
+  createdAt: string;
   attachments?: string[];
 }
 
@@ -34,7 +34,7 @@ export interface InternalNote {
   ticketId: string;
   author: string;
   note: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface KnowledgeBaseArticle {
@@ -48,8 +48,8 @@ export interface KnowledgeBaseArticle {
   views: number;
   helpful: number;
   notHelpful: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   published: boolean;
 }
 
@@ -62,6 +62,7 @@ export interface Client {
   subscribedApps: string[];
   registrationDate: string;
   qrCode: string;
+  qrCodeData: QRCodeData;
   twoFactorEnabled: boolean;
   status: 'Active' | 'Inactive' | 'Archived';
   lastActivity: string;
@@ -69,6 +70,8 @@ export interface Client {
   totalFeatureRequests: number;
   billingInfo?: BillingInfo;
   primaryUserId?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface App {
@@ -77,7 +80,7 @@ export interface App {
   version: string;
   description: string;
   isActive: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface FeatureRequest {
@@ -90,9 +93,9 @@ export interface FeatureRequest {
   priority: Priority;
   upvotes: number;
   upvotedBy: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  estimatedCompletion?: Date;
+  createdAt: string;
+  updatedAt: string;
+  estimatedCompletion?: string;
   isPinned: boolean;
   adminNotes?: string;
 }
@@ -110,6 +113,18 @@ export interface User {
   lastLogin?: string;
   createdAt: string;
   createdBy: string;
+  updatedAt: string;
+}
+
+export interface QRCodeData {
+  clientId: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  qrCode: string;
+  generatedAt: string;
+  expiresAt?: string;
+  isValid: boolean;
 }
 
 export interface BillingInfo {

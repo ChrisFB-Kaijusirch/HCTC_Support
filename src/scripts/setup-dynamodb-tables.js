@@ -149,13 +149,22 @@ const tables = [
     ],
     AttributeDefinitions: [
       { AttributeName: 'id', AttributeType: 'S' },
-      { AttributeName: 'email', AttributeType: 'S' }
+      { AttributeName: 'email', AttributeType: 'S' },
+      { AttributeName: 'clientId', AttributeType: 'S' }
     ],
     GlobalSecondaryIndexes: [
       {
         IndexName: 'EmailIndex',
         KeySchema: [
           { AttributeName: 'email', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      },
+      {
+        IndexName: 'ClientIndex',
+        KeySchema: [
+          { AttributeName: 'clientId', KeyType: 'HASH' }
         ],
         Projection: { ProjectionType: 'ALL' },
         BillingMode: 'PAY_PER_REQUEST'
@@ -198,6 +207,57 @@ const tables = [
         IndexName: 'OrderIndex',
         KeySchema: [
           { AttributeName: 'order', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      }
+    ],
+    BillingMode: 'PAY_PER_REQUEST'
+  },
+  {
+    TableName: 'holdings-ctc-invoices',
+    KeySchema: [
+      { AttributeName: 'id', KeyType: 'HASH' }
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'id', AttributeType: 'S' },
+      { AttributeName: 'clientId', AttributeType: 'S' },
+      { AttributeName: 'invoiceNumber', AttributeType: 'S' }
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'ClientIndex',
+        KeySchema: [
+          { AttributeName: 'clientId', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      },
+      {
+        IndexName: 'InvoiceNumberIndex',
+        KeySchema: [
+          { AttributeName: 'invoiceNumber', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      }
+    ],
+    BillingMode: 'PAY_PER_REQUEST'
+  },
+  {
+    TableName: 'holdings-ctc-qr-codes',
+    KeySchema: [
+      { AttributeName: 'qrCode', KeyType: 'HASH' }
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'qrCode', AttributeType: 'S' },
+      { AttributeName: 'clientId', AttributeType: 'S' }
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'ClientIndex',
+        KeySchema: [
+          { AttributeName: 'clientId', KeyType: 'HASH' }
         ],
         Projection: { ProjectionType: 'ALL' },
         BillingMode: 'PAY_PER_REQUEST'
@@ -265,6 +325,17 @@ async function setupTables() {
     console.log('2. Add your AWS credentials to the .env file');
     console.log('3. Start your application with: npm run dev');
     console.log('\n💡 Your DynamoDB tables are ready to use!');
+    console.log('\n📊 Tables created:');
+    console.log('   - holdings-ctc-clients (Client management with QR codes)');
+    console.log('   - holdings-ctc-users (Multi-user management per client)');
+    console.log('   - holdings-ctc-invoices (Billing system)');
+    console.log('   - holdings-ctc-qr-codes (QR code validation)');
+    console.log('   - holdings-ctc-tickets (Support tickets)');
+    console.log('   - holdings-ctc-apps (Application management)');
+    console.log('   - holdings-ctc-feature-requests (Feature requests)');
+    console.log('   - holdings-ctc-knowledge-base (Help articles)');
+    console.log('   - holdings-ctc-recent-updates (Homepage updates)');
+    console.log('   - holdings-ctc-popular-topics (Popular help topics)');
 
   } catch (error) {
     console.error('\n❌ Setup failed:', error.message);

@@ -26,6 +26,8 @@ export const TABLE_NAMES = {
   USERS: import.meta.env.VITE_DYNAMODB_USERS_TABLE || 'holdings-ctc-users',
   RECENT_UPDATES: import.meta.env.VITE_DYNAMODB_RECENT_UPDATES_TABLE || 'holdings-ctc-recent-updates',
   POPULAR_TOPICS: import.meta.env.VITE_DYNAMODB_POPULAR_TOPICS_TABLE || 'holdings-ctc-popular-topics',
+  INVOICES: import.meta.env.VITE_DYNAMODB_INVOICES_TABLE || 'holdings-ctc-invoices',
+  QR_CODES: import.meta.env.VITE_DYNAMODB_QR_CODES_TABLE || 'holdings-ctc-qr-codes',
 };
 
 // Utility function to check if AWS is configured

@@ -1,7 +1,9 @@
 /**
  * QR Code Generator Utility
- * Generates unique QR codes for client onboarding
+ * Generates unique QR codes for client onboarding with AWS DynamoDB integration
  */
+
+import { dynamoDBService } from '../services/dynamodb';
 
 export interface QRCodeData {
   clientId: string;
@@ -11,17 +13,18 @@ export interface QRCodeData {
   qrCode: string;
   generatedAt: string;
   expiresAt?: string;
+  isValid: boolean;
 }
 
 /**
- * Generates a unique QR code for a client
+ * Generates a unique QR code for a client and stores it in DynamoDB
  */
-export const generateClientQRCode = (clientData: {
+export const generateClientQRCode = async (clientData: {
   clientId: string;
   companyName: string;
   contactName: string;
   email: string;
-}): QRCodeData => {
+}): Promise<QRCodeData> => {
   // Generate a unique QR code identifier
   const timestamp = Date.now();
   const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -32,7 +35,7 @@ export const generateClientQRCode = (clientData: {
   
   const qrCode = `QR_${companyCode}_${randomSuffix}_${timestamp}`;
   
-  return {
+  const qrCodeData: QRCodeData = {
     clientId: clientData.clientId,
     companyName: clientData.companyName,
     contactName: clientData.contactName,
@@ -41,11 +44,35 @@ export const generateClientQRCode = (clientData: {
     generatedAt: new Date().toISOString(),
     // QR codes expire after 30 days for security
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    isValid: true,
   };
+
+  // Store QR code in DynamoDB
+  try {
+    await dynamoDBService.createQRCode(qrCodeData);
+  } catch (error) {
+    console.error('Error storing QR code in DynamoDB:', error);
+    // Continue with local generation for development
+  }
+  
+  return qrCodeData;
 };
 
 /**
- * Validates if a QR code is still valid
+ * Validates if a QR code is still valid by checking DynamoDB
+ */
+export const validateQRCode = async (qrCode: string): Promise<QRCodeData | null> => {
+  try {
+    const qrCodeData = await dynamoDBService.validateQRCode(qrCode);
+    return qrCodeData;
+  } catch (error) {
+    console.error('Error validating QR code:', error);
+    return null;
+  }
+};
+
+/**
+ * Validates if a QR code is still valid (local check)
  */
 export const isQRCodeValid = (qrCodeData: QRCodeData): boolean => {
   if (!qrCodeData.expiresAt) return true; // No expiration set
@@ -53,13 +80,13 @@ export const isQRCodeValid = (qrCodeData: QRCodeData): boolean => {
   const now = new Date();
   const expirationDate = new Date(qrCodeData.expiresAt);
   
-  return now < expirationDate;
+  return now < expirationDate && qrCodeData.isValid;
 };
 
 /**
  * Regenerates a QR code for an existing client
  */
-export const regenerateQRCode = (existingData: QRCodeData): QRCodeData => {
+export const regenerateQRCode = async (existingData: QRCodeData): Promise<QRCodeData> => {
   return generateClientQRCode({
     clientId: existingData.clientId,
     companyName: existingData.companyName,
@@ -89,7 +116,7 @@ Instructions:
 1. Provide this QR code to the client
 2. Client should visit the portal and click "Set Up Account with QR Code"
 3. Client enters the QR code to begin secure account setup
-4. Client will be guided through 2FA setup process
+4. Client will be guided through user setup and 2FA configuration
 
 Note: This QR code is unique to this client and should be kept secure.
   `.trim();
@@ -97,9 +124,9 @@ Note: This QR code is unique to this client and should be kept secure.
 
 /**
  * Extracts client information from a QR code
- * This would typically validate against the database
+ * This validates against the DynamoDB database
  */
-export const parseQRCode = (qrCode: string): { isValid: boolean; clientId?: string } => {
+export const parseQRCode = async (qrCode: string): Promise<{ isValid: boolean; qrCodeData?: QRCodeData }> => {
   // Basic QR code format validation
   const qrPattern = /^QR_[A-Z0-9]+_[A-Z0-9]+_\d+$/;
   
@@ -107,22 +134,42 @@ export const parseQRCode = (qrCode: string): { isValid: boolean; clientId?: stri
     return { isValid: false };
   }
   
-  // In a real implementation, this would query the database
-  // For now, we'll extract the timestamp and validate format
-  const parts = qrCode.split('_');
-  if (parts.length >= 4) {
-    const timestamp = parseInt(parts[parts.length - 1]);
-    const now = Date.now();
-    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+  try {
+    // Validate against DynamoDB
+    const qrCodeData = await validateQRCode(qrCode);
     
-    // Check if QR code is not older than 30 days
-    if (timestamp > thirtyDaysAgo) {
+    if (qrCodeData && isQRCodeValid(qrCodeData)) {
       return { 
         isValid: true, 
-        clientId: `client_${timestamp}` // Mock client ID based on timestamp
+        qrCodeData 
       };
     }
+    
+    return { isValid: false };
+  } catch (error) {
+    console.error('Error parsing QR code:', error);
+    return { isValid: false };
   }
-  
-  return { isValid: false };
+};
+
+/**
+ * Invalidates a QR code (marks as used/expired)
+ */
+export const invalidateQRCode = async (qrCode: string): Promise<boolean> => {
+  try {
+    const qrCodeData = await dynamoDBService.getQRCode(qrCode);
+    if (qrCodeData) {
+      // Mark as invalid
+      await dynamoDBService.create('holdings-ctc-qr-codes', {
+        ...qrCodeData,
+        isValid: false,
+        usedAt: new Date().toISOString(),
+      });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error invalidating QR code:', error);
+    return false;
+  }
 };
