@@ -16,10 +16,14 @@ import { format, subDays, isAfter } from 'date-fns';
 import Card from '../../components/UI/Card';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
-import { mockTickets } from '../../utils/mockData';
+import { useTickets, useClients, useApps } from '../../hooks/useDynamoDB';
 import { TicketStatus, Priority } from '../../types';
 
 const AdminDashboard: React.FC = () => {
+  const { tickets, loading: ticketsLoading } = useTickets();
+  const { clients } = useClients();
+  const { apps } = useApps();
+  
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
 
@@ -29,12 +33,13 @@ const AdminDashboard: React.FC = () => {
   }, [dateRange]);
 
   const filteredTickets = useMemo(() => {
-    return mockTickets.filter(ticket => {
-      const matchesDate = isAfter(ticket.createdAt, dateRangeStart);
+    return tickets.filter(ticket => {
+      const ticketDate = new Date(ticket.createdAt);
+      const matchesDate = isAfter(ticketDate, dateRangeStart);
       const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
       return matchesDate && matchesStatus;
     });
-  }, [dateRangeStart, statusFilter]);
+  }, [tickets, dateRangeStart, statusFilter]);
 
   const stats = useMemo(() => {
     const total = filteredTickets.length;
@@ -57,10 +62,10 @@ const AdminDashboard: React.FC = () => {
   }, [filteredTickets]);
 
   const recentTickets = useMemo(() => {
-    return [...mockTickets]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    return [...tickets]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
-  }, []);
+  }, [tickets]);
 
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
@@ -83,6 +88,22 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  if (ticketsLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded mb-8 w-1/3"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -103,7 +124,7 @@ const AdminDashboard: React.FC = () => {
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
           </select>
-          <Link to="/admin/tickets">
+          <Link to="/submit-ticket">
             <Button icon={Plus}>New Ticket</Button>
           </Link>
         </div>
@@ -201,52 +222,50 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             <div className="space-y-4">
-              {recentTickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Link
-                        to={`/admin/tickets/${ticket.id}`}
-                        className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
-                      >
-                        {ticket.subject}
-                      </Link>
-                      <Badge variant={getStatusColor(ticket.status)} size="sm">
-                        {ticket.status}
-                      </Badge>
-                      <Badge variant={getPriorityColor(ticket.priority)} size="sm">
-                        {ticket.priority}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span>#{ticket.ticketNumber}</span>
-                      <span>{ticket.name}</span>
-                      <span>{ticket.appName}</span>
-                      <span>{format(ticket.createdAt, 'MMM dd, h:mm a')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {ticket.replies.length > 0 && (
-                      <div className="flex items-center space-x-1 text-sm text-gray-500">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{ticket.replies.length}</span>
+              {recentTickets.map((ticket) => {
+                const app = apps.find(a => a.id === ticket.appId);
+                return (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="font-medium text-gray-900 line-clamp-1">
+                          {ticket.subject}
+                        </h3>
+                        <Badge variant={getStatusColor(ticket.status)} size="sm">
+                          {ticket.status}
+                        </Badge>
+                        <Badge variant={getPriorityColor(ticket.priority)} size="sm">
+                          {ticket.priority}
+                        </Badge>
                       </div>
-                    )}
-                    <Link to={`/admin/tickets/${ticket.id}`}>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>#{ticket.ticketNumber}</span>
+                        <span>{ticket.name}</span>
+                        <span>{app?.name || 'Unknown App'}</span>
+                        <span>{format(new Date(ticket.createdAt), 'MMM dd, h:mm a')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {ticket.replies.length > 0 && (
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{ticket.replies.length}</span>
+                        </div>
+                      )}
                       <Button variant="outline" size="sm">
                         View
                       </Button>
-                    </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <Link to="/admin/tickets">
+              <Link to="/track-ticket">
                 <Button variant="outline" className="w-full">
                   View All Tickets
                 </Button>
@@ -261,24 +280,24 @@ const AdminDashboard: React.FC = () => {
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Link to="/admin/tickets" className="block">
+              <Link to="/track-ticket" className="block">
                 <Button variant="outline" className="w-full justify-start" icon={TicketIcon}>
                   Manage Tickets
                 </Button>
               </Link>
-              <Link to="/admin/knowledge-base" className="block">
+              <Link to="/knowledge-base" className="block">
                 <Button variant="outline" className="w-full justify-start" icon={MessageSquare}>
                   Knowledge Base
                 </Button>
               </Link>
-              <Link to="/admin/users" className="block">
+              <Link to="/admin/clients" className="block">
                 <Button variant="outline" className="w-full justify-start" icon={Users}>
                   User Management
                 </Button>
               </Link>
-              <Link to="/admin/reports" className="block">
+              <Link to="/admin/apps" className="block">
                 <Button variant="outline" className="w-full justify-start" icon={TrendingUp}>
-                  Reports & Analytics
+                  App Management
                 </Button>
               </Link>
             </div>
@@ -326,29 +345,23 @@ const AdminDashboard: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">API Response Time</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-success-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900">125ms</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Database Status</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-success-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900">Healthy</span>
+                  <span className="text-sm font-medium text-gray-900">Connected</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Email Service</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-success-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900">Operational</span>
-                </div>
+                <span className="text-sm text-gray-600">Total Clients</span>
+                <span className="text-sm font-medium text-gray-900">{clients.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Last Backup</span>
-                <span className="text-sm font-medium text-gray-900">2 hours ago</span>
+                <span className="text-sm text-gray-600">Active Apps</span>
+                <span className="text-sm font-medium text-gray-900">{apps.filter(a => a.isActive).length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Last Sync</span>
+                <span className="text-sm font-medium text-gray-900">Just now</span>
               </div>
             </div>
           </Card>

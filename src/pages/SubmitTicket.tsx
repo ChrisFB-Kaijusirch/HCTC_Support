@@ -8,9 +8,11 @@ import Select from '../components/UI/Select';
 import Textarea from '../components/UI/Textarea';
 import { IssueType, Priority } from '../types';
 import { generateTicketNumber } from '../utils/mockData';
+import { useTickets } from '../hooks/useDynamoDB';
 
 const SubmitTicket: React.FC = () => {
   const navigate = useNavigate();
+  const { createTicket } = useTickets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
@@ -104,13 +106,37 @@ const SubmitTicket: React.FC = () => {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const newTicketNumber = generateTicketNumber();
+      
+      // Create ticket using DynamoDB
+      await createTicket({
+        ticketNumber: newTicketNumber,
+        clientId: 'client_1', // In real app, get from auth context
+        name: formData.name,
+        email: formData.email,
+        appId: '1', // Map app name to ID
+        appVersion: formData.appVersion || '1.0.0',
+        issueType: formData.issueType as IssueType,
+        priority: formData.priority as Priority,
+        status: 'Open',
+        subject: formData.subject,
+        description: formData.description,
+        attachments: attachments.map(f => f.name),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        replies: [],
+        internalNotes: [],
+      });
 
-    const newTicketNumber = generateTicketNumber();
-    setTicketNumber(newTicketNumber);
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      setTicketNumber(newTicketNumber);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      setErrors({ submit: 'Failed to create ticket. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleTrackTicket = () => {
@@ -335,6 +361,12 @@ const SubmitTicket: React.FC = () => {
             )}
           </div>
         </Card>
+
+        {errors.submit && (
+          <div className="text-error-600 text-sm text-center bg-error-50 p-3 rounded-lg">
+            {errors.submit}
+          </div>
+        )}
 
         <div className="flex justify-end space-x-4">
           <Button

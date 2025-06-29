@@ -24,10 +24,15 @@ import Badge from '../../components/UI/Badge';
 import Input from '../../components/UI/Input';
 import Select from '../../components/UI/Select';
 import Textarea from '../../components/UI/Textarea';
-import { mockApps, mockClients, mockTickets, mockFeatureRequests } from '../../utils/mockData';
+import { useApps, useClients, useTickets, useFeatureRequests } from '../../hooks/useDynamoDB';
 import { App } from '../../types';
 
 const AppManagement: React.FC = () => {
+  const { apps, loading, createApp, updateApp } = useApps();
+  const { clients } = useClients();
+  const { tickets } = useTickets();
+  const { featureRequests } = useFeatureRequests();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -44,7 +49,7 @@ const AppManagement: React.FC = () => {
   });
 
   const filteredApps = useMemo(() => {
-    let filtered = [...mockApps];
+    let filtered = [...apps];
     
     // Search filter
     if (searchTerm) {
@@ -63,49 +68,54 @@ const AppManagement: React.FC = () => {
     }
 
     return filtered;
-  }, [searchTerm, statusFilter]);
+  }, [apps, searchTerm, statusFilter]);
 
   const getAppStats = (appId: string) => {
-    const subscribers = mockClients.filter(client => 
+    const subscribers = clients.filter(client => 
       client.subscribedApps.includes(appId)
     ).length;
     
-    const tickets = mockTickets.filter(ticket => ticket.appId === appId).length;
-    const openTickets = mockTickets.filter(ticket => 
+    const appTickets = tickets.filter(ticket => ticket.appId === appId).length;
+    const openTickets = tickets.filter(ticket => 
       ticket.appId === appId && (ticket.status === 'Open' || ticket.status === 'In Progress')
     ).length;
     
-    const featureRequests = mockFeatureRequests.filter(request => 
+    const appFeatureRequests = featureRequests.filter(request => 
       request.appId === appId
     ).length;
 
-    return { subscribers, tickets, openTickets, featureRequests };
+    return { subscribers, tickets: appTickets, openTickets, featureRequests: appFeatureRequests };
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingApp) {
-      // Update existing app
-      console.log('Updating app:', editingApp.id, formData);
-    } else {
-      // Create new app
-      console.log('Creating new app:', formData);
+    try {
+      if (editingApp) {
+        await updateApp(editingApp.id, formData);
+      } else {
+        await createApp({
+          ...formData,
+          createdAt: new Date(),
+        });
+      }
+      
+      // Reset form
+      setFormData({
+        name: '',
+        version: '',
+        description: '',
+        detailedDescription: '',
+        category: '',
+        supportUrl: '',
+        documentationUrl: '',
+        isActive: true,
+      });
+      setShowAddForm(false);
+      setEditingApp(null);
+    } catch (error) {
+      console.error('Error saving app:', error);
     }
-    
-    // Reset form
-    setFormData({
-      name: '',
-      version: '',
-      description: '',
-      detailedDescription: '',
-      category: '',
-      supportUrl: '',
-      documentationUrl: '',
-      isActive: true,
-    });
-    setShowAddForm(false);
-    setEditingApp(null);
   };
 
   const handleEdit = (app: App) => {
@@ -123,28 +133,40 @@ const AppManagement: React.FC = () => {
     setShowAddForm(true);
   };
 
-  const handleToggleStatus = (appId: string) => {
-    console.log('Toggling app status:', appId);
-    // In real app, this would make an API call
-  };
-
-  const handleDelete = (appId: string) => {
-    if (confirm('Are you sure you want to delete this application? This action cannot be undone.')) {
-      console.log('Deleting app:', appId);
-      // In real app, this would make an API call
+  const handleToggleStatus = async (app: App) => {
+    try {
+      await updateApp(app.id, { isActive: !app.isActive });
+    } catch (error) {
+      console.error('Error toggling app status:', error);
     }
   };
 
   const stats = useMemo(() => {
-    const total = mockApps.length;
-    const active = mockApps.filter(app => app.isActive).length;
-    const inactive = mockApps.filter(app => !app.isActive).length;
-    const totalSubscribers = mockApps.reduce((sum, app) => 
-      sum + mockClients.filter(client => client.subscribedApps.includes(app.id)).length, 0
+    const total = apps.length;
+    const active = apps.filter(app => app.isActive).length;
+    const inactive = apps.filter(app => !app.isActive).length;
+    const totalSubscribers = apps.reduce((sum, app) => 
+      sum + clients.filter(client => client.subscribedApps.includes(app.id)).length, 0
     );
 
     return { total, active, inactive, totalSubscribers };
-  }, []);
+  }, [apps, clients]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded mb-8 w-1/3"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -367,7 +389,7 @@ const AppManagement: React.FC = () => {
           
           <div className="flex items-center justify-end">
             <span className="text-sm text-gray-500">
-              {filteredApps.length} of {mockApps.length} applications
+              {filteredApps.length} of {apps.length} applications
             </span>
           </div>
         </div>
@@ -410,12 +432,7 @@ const AppManagement: React.FC = () => {
                     variant="ghost" 
                     size="sm" 
                     icon={app.isActive ? Archive : Shield}
-                    onClick={() => handleToggleStatus(app.id)}
-                  />
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    icon={MoreVertical}
+                    onClick={() => handleToggleStatus(app)}
                   />
                 </div>
               </div>
@@ -460,7 +477,7 @@ const AppManagement: React.FC = () => {
               <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-3 h-3" />
-                  <span>Created: {format(app.createdAt, 'MMM dd, yyyy')}</span>
+                  <span>Created: {format(new Date(app.createdAt), 'MMM dd, yyyy')}</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
@@ -472,24 +489,15 @@ const AppManagement: React.FC = () => {
 
               {/* Actions */}
               <div className="flex space-x-2">
-                <Link to={`/admin/apps/${app.id}`}>
-                  <Button variant="outline" size="sm" icon={Eye} className="flex-1">
-                    View Details
-                  </Button>
-                </Link>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   icon={Settings}
                   onClick={() => handleEdit(app)}
+                  className="flex-1"
                 >
                   Edit
                 </Button>
-                <Link to={`/admin/tickets?app=${app.id}`}>
-                  <Button variant="ghost" size="sm" icon={TicketIcon}>
-                    Tickets
-                  </Button>
-                </Link>
               </div>
             </Card>
           );

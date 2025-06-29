@@ -7,10 +7,13 @@ import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
 import Badge from '../components/UI/Badge';
 import { Ticket } from '../types';
-import { getTicketByNumber, mockTickets } from '../utils/mockData';
+import { useTickets, useApps } from '../hooks/useDynamoDB';
 
 const TrackTicket: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { tickets } = useTickets();
+  const { apps } = useApps();
+  
   const [ticketNumber, setTicketNumber] = useState(searchParams.get('ticket') || '');
   const [email, setEmail] = useState('');
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -25,7 +28,7 @@ const TrackTicket: React.FC = () => {
       setTicketNumber(ticketParam);
       handleSingleTicketSearch(ticketParam);
     }
-  }, [searchParams]);
+  }, [searchParams, tickets]);
 
   const handleSingleTicketSearch = async (searchTicketNumber?: string) => {
     const searchNumber = searchTicketNumber || ticketNumber;
@@ -40,7 +43,7 @@ const TrackTicket: React.FC = () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const foundTicket = getTicketByNumber(searchNumber.trim());
+    const foundTicket = tickets.find(t => t.ticketNumber === searchNumber.trim());
     if (foundTicket) {
       setTicket(foundTicket);
       setViewMode('single');
@@ -69,7 +72,7 @@ const TrackTicket: React.FC = () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const foundTickets = mockTickets.filter(t => 
+    const foundTickets = tickets.filter(t => 
       t.email.toLowerCase() === email.toLowerCase()
     );
 
@@ -106,163 +109,167 @@ const TrackTicket: React.FC = () => {
     }
   };
 
-  const renderTicketDetails = (ticketData: Ticket) => (
-    <div className="space-y-6">
-      {/* Ticket Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {ticketData.subject}
-          </h2>
-          <p className="text-gray-600">
-            Ticket #{ticketData.ticketNumber}
-          </p>
-        </div>
-        <div className="flex items-center space-x-3 mt-4 md:mt-0">
-          <Badge variant={getStatusColor(ticketData.status)}>
-            {ticketData.status}
-          </Badge>
-          <Badge variant={getPriorityColor(ticketData.priority)}>
-            {ticketData.priority} Priority
-          </Badge>
-        </div>
-      </div>
-
-      {/* Ticket Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Submitted by</span>
+  const renderTicketDetails = (ticketData: Ticket) => {
+    const app = apps.find(a => a.id === ticketData.appId);
+    
+    return (
+      <div className="space-y-6">
+        {/* Ticket Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {ticketData.subject}
+            </h2>
+            <p className="text-gray-600">
+              Ticket #{ticketData.ticketNumber}
+            </p>
           </div>
-          <p className="text-gray-900">{ticketData.name}</p>
-          <p className="text-sm text-gray-600">{ticketData.email}</p>
+          <div className="flex items-center space-x-3 mt-4 md:mt-0">
+            <Badge variant={getStatusColor(ticketData.status)}>
+              {ticketData.status}
+            </Badge>
+            <Badge variant={getPriorityColor(ticketData.priority)}>
+              {ticketData.priority} Priority
+            </Badge>
+          </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Clock className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Created</span>
-          </div>
-          <p className="text-gray-900">
-            {format(ticketData.createdAt, 'MMM dd, yyyy')}
-          </p>
-          <p className="text-sm text-gray-600">
-            {format(ticketData.createdAt, 'h:mm a')}
-          </p>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <FileText className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Application</span>
-          </div>
-          <p className="text-gray-900">{ticketData.appName}</p>
-          {ticketData.appVersion && (
-            <p className="text-sm text-gray-600">v{ticketData.appVersion}</p>
-          )}
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <MessageSquare className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Issue Type</span>
-          </div>
-          <p className="text-gray-900">{ticketData.issueType}</p>
-          {ticketData.assignedTo && (
-            <p className="text-sm text-gray-600">Assigned to {ticketData.assignedTo}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Description */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
-        <p className="text-gray-700 whitespace-pre-wrap">{ticketData.description}</p>
-      </Card>
-
-      {/* Replies */}
-      {ticketData.replies.length > 0 && (
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Conversation ({ticketData.replies.length})
-          </h3>
-          <div className="space-y-4">
-            {ticketData.replies.map((reply) => (
-              <div
-                key={reply.id}
-                className={`p-4 rounded-lg ${
-                  reply.authorType === 'admin'
-                    ? 'bg-primary-50 border-l-4 border-primary-500'
-                    : 'bg-gray-50 border-l-4 border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900">
-                      {reply.author}
-                    </span>
-                    <Badge 
-                      variant={reply.authorType === 'admin' ? 'info' : 'default'}
-                      size="sm"
-                    >
-                      {reply.authorType === 'admin' ? 'Support Team' : 'Customer'}
-                    </Badge>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {format(reply.createdAt, 'MMM dd, yyyy h:mm a')}
-                  </span>
-                </div>
-                <p className="text-gray-700 whitespace-pre-wrap">{reply.message}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Status Timeline */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Timeline</h3>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
-            <div>
-              <p className="font-medium text-gray-900">Ticket Created</p>
-              <p className="text-sm text-gray-600">
-                {format(ticketData.createdAt, 'MMM dd, yyyy h:mm a')}
-              </p>
+        {/* Ticket Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Submitted by</span>
             </div>
+            <p className="text-gray-900">{ticketData.name}</p>
+            <p className="text-sm text-gray-600">{ticketData.email}</p>
           </div>
-          
-          {ticketData.replies.length > 0 && (
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Created</span>
+            </div>
+            <p className="text-gray-900">
+              {format(new Date(ticketData.createdAt), 'MMM dd, yyyy')}
+            </p>
+            <p className="text-sm text-gray-600">
+              {format(new Date(ticketData.createdAt), 'h:mm a')}
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <FileText className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Application</span>
+            </div>
+            <p className="text-gray-900">{app?.name || 'Unknown App'}</p>
+            {ticketData.appVersion && (
+              <p className="text-sm text-gray-600">v{ticketData.appVersion}</p>
+            )}
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <MessageSquare className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Issue Type</span>
+            </div>
+            <p className="text-gray-900">{ticketData.issueType}</p>
+            {ticketData.assignedTo && (
+              <p className="text-sm text-gray-600">Assigned to {ticketData.assignedTo}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Description */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+          <p className="text-gray-700 whitespace-pre-wrap">{ticketData.description}</p>
+        </Card>
+
+        {/* Replies */}
+        {ticketData.replies.length > 0 && (
+          <Card>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Conversation ({ticketData.replies.length})
+            </h3>
+            <div className="space-y-4">
+              {ticketData.replies.map((reply) => (
+                <div
+                  key={reply.id}
+                  className={`p-4 rounded-lg ${
+                    reply.authorType === 'admin'
+                      ? 'bg-primary-50 border-l-4 border-primary-500'
+                      : 'bg-gray-50 border-l-4 border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-gray-900">
+                        {reply.author}
+                      </span>
+                      <Badge 
+                        variant={reply.authorType === 'admin' ? 'info' : 'default'}
+                        size="sm"
+                      >
+                        {reply.authorType === 'admin' ? 'Support Team' : 'Customer'}
+                      </Badge>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {format(new Date(reply.createdAt), 'MMM dd, yyyy h:mm a')}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 whitespace-pre-wrap">{reply.message}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Status Timeline */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Timeline</h3>
+          <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-warning-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
               <div>
-                <p className="font-medium text-gray-900">Response Added</p>
+                <p className="font-medium text-gray-900">Ticket Created</p>
                 <p className="text-sm text-gray-600">
-                  {format(ticketData.replies[ticketData.replies.length - 1].createdAt, 'MMM dd, yyyy h:mm a')}
+                  {format(new Date(ticketData.createdAt), 'MMM dd, yyyy h:mm a')}
                 </p>
               </div>
             </div>
-          )}
-          
-          <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${
-              ticketData.status === 'Resolved' || ticketData.status === 'Closed'
-                ? 'bg-success-500'
-                : 'bg-gray-300'
-            }`}></div>
-            <div>
-              <p className="font-medium text-gray-900">Current Status: {ticketData.status}</p>
-              <p className="text-sm text-gray-600">
-                Last updated: {format(ticketData.updatedAt, 'MMM dd, yyyy h:mm a')}
-              </p>
+            
+            {ticketData.replies.length > 0 && (
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-warning-500 rounded-full"></div>
+                <div>
+                  <p className="font-medium text-gray-900">Response Added</p>
+                  <p className="text-sm text-gray-600">
+                    {format(new Date(ticketData.replies[ticketData.replies.length - 1].createdAt), 'MMM dd, yyyy h:mm a')}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-3">
+              <div className={`w-3 h-3 rounded-full ${
+                ticketData.status === 'Resolved' || ticketData.status === 'Closed'
+                  ? 'bg-success-500'
+                  : 'bg-gray-300'
+              }`}></div>
+              <div>
+                <p className="font-medium text-gray-900">Current Status: {ticketData.status}</p>
+                <p className="text-sm text-gray-600">
+                  Last updated: {format(new Date(ticketData.updatedAt), 'MMM dd, yyyy h:mm a')}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
-    </div>
-  );
+        </Card>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -349,66 +356,69 @@ const TrackTicket: React.FC = () => {
           </div>
           
           <div className="grid gap-6">
-            {userTickets.map((ticketItem) => (
-              <Card key={ticketItem.id} hover>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {ticketItem.subject}
-                    </h3>
-                    <p className="text-gray-600">#{ticketItem.ticketNumber}</p>
+            {userTickets.map((ticketItem) => {
+              const app = apps.find(a => a.id === ticketItem.appId);
+              return (
+                <Card key={ticketItem.id} hover>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {ticketItem.subject}
+                      </h3>
+                      <p className="text-gray-600">#{ticketItem.ticketNumber}</p>
+                    </div>
+                    <div className="flex items-center space-x-3 mt-2 md:mt-0">
+                      <Badge variant={getStatusColor(ticketItem.status)}>
+                        {ticketItem.status}
+                      </Badge>
+                      <Badge variant={getPriorityColor(ticketItem.priority)}>
+                        {ticketItem.priority}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3 mt-2 md:mt-0">
-                    <Badge variant={getStatusColor(ticketItem.status)}>
-                      {ticketItem.status}
-                    </Badge>
-                    <Badge variant={getPriorityColor(ticketItem.priority)}>
-                      {ticketItem.priority}
-                    </Badge>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Application</span>
+                      <p className="text-gray-900">{app?.name || 'Unknown App'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Created</span>
+                      <p className="text-gray-900">
+                        {format(new Date(ticketItem.createdAt), 'MMM dd, yyyy')}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Last Updated</span>
+                      <p className="text-gray-900">
+                        {format(new Date(ticketItem.updatedAt), 'MMM dd, yyyy')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Application</span>
-                    <p className="text-gray-900">{ticketItem.appName}</p>
+                  
+                  <p className="text-gray-700 mb-4 line-clamp-2">
+                    {ticketItem.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>{ticketItem.replies.length} replies</span>
+                      <span>{ticketItem.issueType}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTicket(ticketItem);
+                        setViewMode('single');
+                      }}
+                    >
+                      View Details
+                    </Button>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Created</span>
-                    <p className="text-gray-900">
-                      {format(ticketItem.createdAt, 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Last Updated</span>
-                    <p className="text-gray-900">
-                      {format(ticketItem.updatedAt, 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                </div>
-                
-                <p className="text-gray-700 mb-4 line-clamp-2">
-                  {ticketItem.description}
-                </p>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{ticketItem.replies.length} replies</span>
-                    <span>{ticketItem.issueType}</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setTicket(ticketItem);
-                      setViewMode('single');
-                    }}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
