@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HelpCircle, Search, User, Settings, Shield } from 'lucide-react';
+import { HelpCircle, Search, User, Settings, Shield, LogIn } from 'lucide-react';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -37,16 +37,6 @@ const Header: React.FC = () => {
                   }`}
                 >
                   Home
-                </Link>
-                <Link
-                  to="/submit-ticket"
-                  className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/submit-ticket' 
-                      ? 'text-primary-600' 
-                      : 'text-gray-700 hover:text-primary-600'
-                  }`}
-                >
-                  Submit Ticket
                 </Link>
                 <Link
                   to="/track-ticket"
@@ -182,15 +172,17 @@ const Header: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Link
                   to="/client/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 transition-colors"
+                  className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
                 >
-                  Client Login
+                  <LogIn className="w-4 h-4" />
+                  <span>Client Login</span>
                 </Link>
                 <Link
                   to="/admin/login"
-                  className="px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                  className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors rounded-lg hover:bg-primary-50"
                 >
-                  Admin Login
+                  <Shield className="w-4 h-4" />
+                  <span>Admin Login</span>
                 </Link>
               </div>
             )}
