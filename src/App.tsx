@@ -9,6 +9,7 @@ import KnowledgeBaseArticle from './pages/KnowledgeBaseArticle';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import ClientManagement from './pages/Admin/ClientManagement';
 import AppManagement from './pages/Admin/AppManagement';
+import ContentManagement from './pages/Admin/ContentManagement';
 import InvoiceManagement from './pages/Admin/InvoiceManagement';
 import ClientDashboard from './pages/Client/ClientDashboard';
 import UserManagement from './pages/Client/UserManagement';
@@ -52,6 +53,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/clients" element={<ClientManagement />} />
           <Route path="/admin/apps" element={<AppManagement />} />
+          <Route path="/admin/content" element={<ContentManagement />} />
           <Route path="/admin/invoices" element={<InvoiceManagement />} />
           
           {/* Client Routes */}

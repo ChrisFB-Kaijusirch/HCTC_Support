@@ -13,7 +13,9 @@ import {
   App, 
   FeatureRequest, 
   KnowledgeBaseArticle, 
-  User 
+  User,
+  RecentUpdate,
+  PopularTopic
 } from '../types';
 
 // Fallback to mock data if AWS is not configured
@@ -239,6 +241,53 @@ class DynamoDBService {
 
   async getAllKnowledgeBaseArticles(): Promise<KnowledgeBaseArticle[]> {
     return this.scan<KnowledgeBaseArticle>(TABLE_NAMES.KNOWLEDGE_BASE);
+  }
+
+  // Content Management operations
+  async createRecentUpdate(update: RecentUpdate): Promise<RecentUpdate> {
+    return this.create('holdings-ctc-recent-updates', {
+      ...update,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getAllRecentUpdates(): Promise<RecentUpdate[]> {
+    return this.scan<RecentUpdate>('holdings-ctc-recent-updates');
+  }
+
+  async updateRecentUpdate(updateId: string, updates: Partial<RecentUpdate>): Promise<RecentUpdate> {
+    return this.update('holdings-ctc-recent-updates', { id: updateId }, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async deleteRecentUpdate(updateId: string): Promise<void> {
+    return this.delete('holdings-ctc-recent-updates', { id: updateId });
+  }
+
+  async createPopularTopic(topic: PopularTopic): Promise<PopularTopic> {
+    return this.create('holdings-ctc-popular-topics', {
+      ...topic,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getAllPopularTopics(): Promise<PopularTopic[]> {
+    return this.scan<PopularTopic>('holdings-ctc-popular-topics');
+  }
+
+  async updatePopularTopic(topicId: string, updates: Partial<PopularTopic>): Promise<PopularTopic> {
+    return this.update('holdings-ctc-popular-topics', { id: topicId }, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async deletePopularTopic(topicId: string): Promise<void> {
+    return this.delete('holdings-ctc-popular-topics', { id: topicId });
   }
 }
 

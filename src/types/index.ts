@@ -43,6 +43,7 @@ export interface KnowledgeBaseArticle {
   content: string;
   category: string;
   appId: string;
+  appName: string;
   tags: string[];
   views: number;
   helpful: number;
@@ -156,6 +157,31 @@ export interface InvoiceItem {
   unitPrice: number;
   total: number;
   appId?: string;
+}
+
+// Content Management Types
+export interface RecentUpdate {
+  id: string;
+  title: string;
+  description: string;
+  type: 'update' | 'maintenance' | 'content' | 'feature';
+  date: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PopularTopic {
+  id: string;
+  title: string;
+  articleId: string;
+  views: number;
+  isActive: boolean;
+  order: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type IssueType = 

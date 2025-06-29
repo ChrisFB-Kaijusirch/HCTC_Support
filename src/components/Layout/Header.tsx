@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { HelpCircle, Search, User, Settings, Shield, LogIn, LogOut, ChevronDown, Users, CreditCard } from 'lucide-react';
+import { HelpCircle, Search, User, Settings, Shield, LogIn, LogOut, ChevronDown, Users, CreditCard, FileText } from 'lucide-react';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -133,6 +133,16 @@ const Header: React.FC = () => {
                   Applications
                 </Link>
                 <Link
+                  to="/admin/content"
+                  className={`text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/admin/content') 
+                      ? 'text-primary-600' 
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
+                >
+                  Content
+                </Link>
+                <Link
                   to="/admin/invoices"
                   className={`text-sm font-medium transition-colors ${
                     location.pathname.startsWith('/admin/invoices') 
@@ -230,6 +240,17 @@ const Header: React.FC = () => {
                         <User className="w-4 h-4" />
                         <span>Profile</span>
                       </Link>
+                      
+                      {userType === 'admin' && (
+                        <Link
+                          to="/admin/content"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>Content Management</span>
+                        </Link>
+                      )}
                       
                       {userType === 'client' && (
                         <>

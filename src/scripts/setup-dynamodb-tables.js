@@ -162,6 +162,48 @@ const tables = [
       }
     ],
     BillingMode: 'PAY_PER_REQUEST'
+  },
+  {
+    TableName: 'holdings-ctc-recent-updates',
+    KeySchema: [
+      { AttributeName: 'id', KeyType: 'HASH' }
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'id', AttributeType: 'S' },
+      { AttributeName: 'type', AttributeType: 'S' }
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'TypeIndex',
+        KeySchema: [
+          { AttributeName: 'type', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      }
+    ],
+    BillingMode: 'PAY_PER_REQUEST'
+  },
+  {
+    TableName: 'holdings-ctc-popular-topics',
+    KeySchema: [
+      { AttributeName: 'id', KeyType: 'HASH' }
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'id', AttributeType: 'S' },
+      { AttributeName: 'order', AttributeType: 'N' }
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'OrderIndex',
+        KeySchema: [
+          { AttributeName: 'order', KeyType: 'HASH' }
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        BillingMode: 'PAY_PER_REQUEST'
+      }
+    ],
+    BillingMode: 'PAY_PER_REQUEST'
   }
 ];
 
