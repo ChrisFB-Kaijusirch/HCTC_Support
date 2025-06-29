@@ -34,8 +34,18 @@ class DynamoDBService {
   private useMockData = !isAWSConfigured();
 
   constructor() {
+    console.log('Environment check:', {
+      VITE_AWS_ACCESS_KEY_ID: import.meta.env.VITE_AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET',
+      VITE_AWS_SECRET_ACCESS_KEY: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET',
+      VITE_AWS_REGION: import.meta.env.VITE_AWS_REGION || 'NOT SET',
+      isAWSConfigured: isAWSConfigured(),
+      useMockData: this.useMockData
+    });
+    
     if (this.useMockData) {
       console.warn('AWS not configured. Using mock data for development.');
+    } else {
+      console.log('AWS configured successfully. Using real AWS DynamoDB.');
     }
   }
 
