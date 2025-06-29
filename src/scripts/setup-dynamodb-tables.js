@@ -9,6 +9,7 @@
  * Usage: node src/scripts/setup-dynamodb-tables.js
  */
 
+import 'dotenv/config';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { 
   CreateTableCommand, 
