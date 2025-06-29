@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, Smartphone, Shield, CheckCircle } from 'lucide-react';
+import { QrCode, Smartphone, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
 import Input from '../UI/Input';
+import { parseQRCode } from '../../utils/qrCodeGenerator';
 
 const QRSetup: React.FC = () => {
   const navigate = useNavigate();
@@ -12,36 +13,68 @@ const QRSetup: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [clientInfo, setClientInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleQRSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulate QR code validation
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Validate QR code format and extract client info
+      const qrValidation = parseQRCode(qrCode);
+      
+      if (!qrValidation.isValid) {
+        setError('Invalid QR code format. Please check the code and try again.');
+        setIsLoading(false);
+        return;
+      }
 
-    // Mock client info based on QR code
-    const mockClientInfo = {
-      companyName: 'TechCorp Solutions',
-      contactName: 'John Doe',
-      email: 'john@techcorp.com',
-      subscribedApps: ['Portfolio Manager', 'Analytics Dashboard']
-    };
+      // Simulate API call to validate QR code and get client info
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-    setClientInfo(mockClientInfo);
-    setStep('verify');
-    setIsLoading(false);
+      // Mock client info based on QR code validation
+      // In a real app, this would fetch from the database using the clientId
+      const mockClientInfo = {
+        companyName: 'TechCorp Solutions',
+        contactName: 'John Doe',
+        email: 'john@techcorp.com',
+        subscribedApps: ['Portfolio Manager', 'Analytics Dashboard'],
+        qrCode: qrCode,
+        isValid: true
+      };
+
+      setClientInfo(mockClientInfo);
+      setStep('verify');
+    } catch (err) {
+      setError('Failed to validate QR code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulate 2FA setup verification
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Simulate 2FA setup verification
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    setStep('complete');
-    setIsLoading(false);
+      // Validate verification code (in real app, this would verify the actual 2FA code)
+      if (verificationCode.length !== 6) {
+        setError('Please enter a valid 6-digit verification code.');
+        setIsLoading(false);
+        return;
+      }
+
+      setStep('complete');
+    } catch (err) {
+      setError('Failed to verify code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleComplete = () => {
@@ -78,9 +111,17 @@ const QRSetup: React.FC = () => {
                 label="QR Code"
                 value={qrCode}
                 onChange={(e) => setQrCode(e.target.value)}
-                placeholder="QR_COMPANY_XXX"
+                placeholder="QR_COMPANY_XXX_XXXXX_XXXXXXXXX"
                 required
+                helperText="Format: QR_COMPANY_XXX_XXXXX_XXXXXXXXX"
               />
+
+              {error && (
+                <div className="flex items-center space-x-2 text-error-600 bg-error-50 p-3 rounded-lg">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
 
               <Button
                 type="submit"
@@ -90,18 +131,29 @@ const QRSetup: React.FC = () => {
                 Validate QR Code
               </Button>
             </form>
+
+            <div className="mt-6 bg-blue-50 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+                📧 Don't have a QR code?
+              </h4>
+              <p className="text-sm text-blue-800">
+                Contact Holdings CTC support to request your unique QR code for secure account setup.
+              </p>
+            </div>
           </Card>
         )}
 
         {step === 'verify' && clientInfo && (
           <Card>
             <div className="text-center mb-6">
-              <Smartphone className="w-16 h-16 text-primary-600 mx-auto mb-4" />
+              <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-success-600" />
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Set Up Two-Factor Authentication
+                QR Code Validated Successfully!
               </h3>
               <p className="text-sm text-gray-600">
-                Secure your account with 2FA using Google Authenticator or SMS
+                Now set up two-factor authentication for your account
               </p>
             </div>
 
@@ -155,6 +207,13 @@ const QRSetup: React.FC = () => {
                 required
               />
 
+              {error && (
+                <div className="flex items-center space-x-2 text-error-600 bg-error-50 p-3 rounded-lg">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 loading={isLoading}
@@ -189,6 +248,7 @@ const QRSetup: React.FC = () => {
                   <li>• Two-factor authentication</li>
                   <li>• Secure ticket access</li>
                   <li>• Encrypted communications</li>
+                  <li>• QR code-based account verification</li>
                 </ul>
               </div>
 
@@ -198,6 +258,12 @@ const QRSetup: React.FC = () => {
             </div>
           </Card>
         )}
+
+        <div className="text-center">
+          <p className="text-sm text-gray-500">
+            Need help? Contact Holdings CTC support for assistance.
+          </p>
+        </div>
       </div>
     </div>
   );

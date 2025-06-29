@@ -13,7 +13,8 @@ import {
   Shield,
   Archive,
   Edit,
-  Eye
+  Eye,
+  QrCode
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Card from '../../components/UI/Card';
@@ -21,8 +22,10 @@ import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Input from '../../components/UI/Input';
 import Select from '../../components/UI/Select';
+import QRCodeDisplay from '../../components/UI/QRCodeDisplay';
 import { useClients, useApps } from '../../hooks/useDynamoDB';
 import { Client } from '../../types';
+import { generateClientQRCode, QRCodeData } from '../../utils/qrCodeGenerator';
 
 const ClientManagement: React.FC = () => {
   const { clients, loading, createClient, updateClient } = useClients();
@@ -33,6 +36,7 @@ const ClientManagement: React.FC = () => {
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'date' | 'activity'>('name');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [showQRCode, setShowQRCode] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -108,13 +112,27 @@ const ClientManagement: React.FC = () => {
     e.preventDefault();
     
     try {
+      const clientId = editingClient?.id || `client_${Date.now()}`;
+      
+      // Generate QR code for new clients or when updating client info
+      const qrCodeData = generateClientQRCode({
+        clientId,
+        companyName: formData.companyName,
+        contactName: formData.contactName,
+        email: formData.email,
+      });
+
       if (editingClient) {
-        await updateClient(editingClient.id, formData);
+        await updateClient(editingClient.id, {
+          ...formData,
+          qrCode: qrCodeData.qrCode, // Update QR code with new info
+        });
       } else {
         await createClient({
           ...formData,
+          id: clientId,
           registrationDate: new Date().toISOString(),
-          qrCode: `QR_${Date.now()}`,
+          qrCode: qrCodeData.qrCode,
           lastActivity: new Date().toISOString(),
           totalTickets: 0,
           totalFeatureRequests: 0,
@@ -150,6 +168,32 @@ const ClientManagement: React.FC = () => {
       twoFactorEnabled: client.twoFactorEnabled,
     });
     setShowAddForm(true);
+  };
+
+  const handleShowQRCode = (clientId: string) => {
+    setShowQRCode(clientId);
+  };
+
+  const handleRegenerateQRCode = async (clientId: string, newQRCodeData: QRCodeData) => {
+    try {
+      await updateClient(clientId, {
+        qrCode: newQRCodeData.qrCode,
+      });
+      // Refresh the client data to show the new QR code
+    } catch (error) {
+      console.error('Error regenerating QR code:', error);
+    }
+  };
+
+  const getClientQRCodeData = (client: Client): QRCodeData => {
+    return {
+      clientId: client.id,
+      companyName: client.companyName,
+      contactName: client.contactName,
+      email: client.email,
+      qrCode: client.qrCode,
+      generatedAt: client.registrationDate,
+    };
   };
 
   if (loading) {
@@ -197,6 +241,37 @@ const ClientManagement: React.FC = () => {
           Add New Client
         </Button>
       </div>
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Client QR Code</h2>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowQRCode(null)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              {(() => {
+                const client = clients.find(c => c.id === showQRCode);
+                if (!client) return <p>Client not found</p>;
+                
+                return (
+                  <QRCodeDisplay
+                    qrCodeData={getClientQRCodeData(client)}
+                    onRegenerate={(newQRCodeData) => handleRegenerateQRCode(client.id, newQRCodeData)}
+                  />
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Form */}
       {showAddForm && (
@@ -308,6 +383,19 @@ const ClientManagement: React.FC = () => {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* QR Code Info */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">
+                🔐 QR Code Generation
+              </h3>
+              <p className="text-sm text-blue-800">
+                {editingClient 
+                  ? 'Saving changes will update the client\'s QR code with the new information.'
+                  : 'A unique QR code will be automatically generated for this client upon creation. This QR code can be sent to the client for secure account setup.'
+                }
+              </p>
             </div>
 
             <div className="flex justify-end space-x-4">
@@ -450,6 +538,12 @@ const ClientManagement: React.FC = () => {
                           2FA
                         </Badge>
                       )}
+                      {client.qrCode && (
+                        <Badge variant="success" size="sm">
+                          <QrCode className="w-3 h-3 mr-1" />
+                          QR
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
@@ -503,6 +597,16 @@ const ClientManagement: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
+                    icon={QrCode}
+                    onClick={() => handleShowQRCode(client.id)}
+                  >
+                    QR Code
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    icon={Edit}
                     onClick={() => handleEdit(client)}
                   >
                     Edit
