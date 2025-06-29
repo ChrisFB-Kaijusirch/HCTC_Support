@@ -9,9 +9,7 @@ import {
   AlertCircle,
   TrendingUp,
   Users,
-  MessageSquare,
-  LogIn,
-  UserPlus
+  MessageSquare
 } from 'lucide-react';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
@@ -93,27 +91,9 @@ const Home: React.FC = () => {
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           Welcome to Holdings CTC Support
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
           Get help with all your Holdings CTC applications. Submit tickets, track progress, 
           and find answers in our comprehensive knowledge base.
-        </p>
-        
-        {/* Login Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <Link to="/client/login">
-            <Button size="lg" icon={LogIn}>
-              Client Login
-            </Button>
-          </Link>
-          <Link to="/admin/login">
-            <Button variant="outline" size="lg" icon={UserPlus}>
-              Admin Login
-            </Button>
-          </Link>
-        </div>
-        
-        <p className="text-sm text-gray-500">
-          New client? Contact us to get your QR code for account setup.
         </p>
       </div>
 
@@ -252,34 +232,6 @@ const Home: React.FC = () => {
             </Link>
           </div>
         </Card>
-      </div>
-
-      {/* Authentication Required Notice */}
-      <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-start space-x-3">
-          <LogIn className="w-6 h-6 text-blue-600 mt-1" />
-          <div>
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              Account Required for Full Access
-            </h3>
-            <p className="text-blue-800 mb-4">
-              To submit tickets and access personalized features, you'll need to log in to your account. 
-              Some features like browsing the knowledge base and tracking tickets are available without login.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/client/login">
-                <Button size="sm">
-                  Client Login
-                </Button>
-              </Link>
-              <Link to="/qr-setup">
-                <Button variant="outline" size="sm">
-                  New Client Setup
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Contact Section */}

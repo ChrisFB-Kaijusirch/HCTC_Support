@@ -1,11 +1,40 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { HelpCircle, Search, User, Settings, Shield, LogIn } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { HelpCircle, Search, User, Settings, Shield, LogIn, LogOut, ChevronDown } from 'lucide-react';
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isClientRoute = location.pathname.startsWith('/client');
+
+  // Mock authentication state - in real app, this would come from context
+  const isAuthenticated = isAdminRoute || isClientRoute;
+  const userType = isAdminRoute ? 'admin' : isClientRoute ? 'client' : null;
+  const userName = isAdminRoute ? 'Admin User' : isClientRoute ? 'John Doe' : null;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    // In real app, this would clear authentication state
+    setShowUserDropdown(false);
+    navigate('/');
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -119,7 +148,7 @@ const Header: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/submit-ticket"
+                  to="/client/login"
                   className={`text-sm font-medium transition-colors ${
                     location.pathname === '/submit-ticket' 
                       ? 'text-primary-600' 
@@ -148,24 +177,69 @@ const Header: React.FC = () => {
               <Search className="w-5 h-5" />
             </button>
             
-            {isAdminRoute ? (
+            {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                   <Settings className="w-5 h-5" />
                 </button>
-                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
-                  <Shield className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Admin</span>
-                </div>
-              </div>
-            ) : isClientRoute ? (
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                  <Settings className="w-5 h-5" />
-                </button>
-                <div className="flex items-center space-x-2 px-3 py-2 bg-primary-100 rounded-lg">
-                  <User className="w-4 h-4 text-primary-600" />
-                  <span className="text-sm font-medium text-primary-700">John Doe</span>
+                
+                {/* User Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                    className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      {userType === 'admin' ? (
+                        <Shield className="w-4 h-4 text-gray-600" />
+                      ) : (
+                        <User className="w-4 h-4 text-primary-600" />
+                      )}
+                      <span className="text-sm font-medium text-gray-700">
+                        {userName}
+                      </span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${
+                      showUserDropdown ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showUserDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">{userName}</p>
+                        <p className="text-xs text-gray-500 capitalize">{userType} Account</p>
+                      </div>
+                      
+                      <Link
+                        to={userType === 'admin' ? '/admin/dashboard' : '/client/dashboard'}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </Link>
+                      
+                      <button
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </button>
+                      
+                      <div className="border-t border-gray-100 mt-1 pt-1">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Log Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
