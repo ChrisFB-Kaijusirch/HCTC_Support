@@ -158,7 +158,7 @@ const Header: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/client/login"
+                  to="/submit-ticket"
                   className={`text-sm font-medium transition-colors ${
                     location.pathname === '/submit-ticket' 
                       ? 'text-primary-600' 

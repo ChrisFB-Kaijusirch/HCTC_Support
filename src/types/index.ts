@@ -66,8 +66,8 @@ export interface Client {
   lastActivity: string;
   totalTickets: number;
   totalFeatureRequests: number;
-  billingInfo: BillingInfo;
-  primaryUserId: string;
+  billingInfo?: BillingInfo;
+  primaryUserId?: string;
 }
 
 export interface App {
