@@ -113,9 +113,9 @@ const ClientManagement: React.FC = () => {
       } else {
         await createClient({
           ...formData,
-          registrationDate: new Date(),
+          registrationDate: new Date().toISOString(),
           qrCode: `QR_${Date.now()}`,
-          lastActivity: new Date(),
+          lastActivity: new Date().toISOString(),
           totalTickets: 0,
           totalFeatureRequests: 0,
         });

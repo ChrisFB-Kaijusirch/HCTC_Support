@@ -59,11 +59,11 @@ export interface Client {
   email: string;
   phone: string;
   subscribedApps: string[];
-  registrationDate: Date;
+  registrationDate: string;
   qrCode: string;
   twoFactorEnabled: boolean;
   status: 'Active' | 'Inactive' | 'Archived';
-  lastActivity: Date;
+  lastActivity: string;
   totalTickets: number;
   totalFeatureRequests: number;
 }
