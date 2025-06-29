@@ -55,14 +55,19 @@ class DynamoDBService {
       return item; // Mock implementation
     }
 
+    console.log('Creating item in table:', tableName, 'Item:', item);
     try {
-      await dynamoDBDocClient.send(new PutCommand({
+      const command = new PutCommand({
         TableName: tableName,
         Item: item,
-      }));
+      });
+      console.log('Sending PutCommand:', command);
+      const result = await dynamoDBDocClient.send(command);
+      console.log('PutCommand result:', result);
       return item;
     } catch (error) {
-      console.error('Error creating item:', error);
+      console.error('Error creating item in table', tableName, ':', error);
+      console.error('Item that failed:', item);
       throw error;
     }
   }
