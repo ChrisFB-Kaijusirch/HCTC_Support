@@ -27,8 +27,11 @@ function App() {
   };
 
   return (
-    <Router>
+    <Router basename="/HCTC_Support">
       <Layout>
+        <div style={{ background: 'red', padding: '20px', color: 'white' }}>
+          DEBUG: Layout children are rendering
+        </div>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/submit-ticket" element={<SubmitTicket />} />
