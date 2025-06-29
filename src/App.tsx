@@ -16,9 +16,9 @@ import QRSetup from './components/Auth/QRSetup';
 import './index.css';
 
 function App() {
-  const handleLogin = async (email: string, password: string, twoFactorCode?: string) => {
-    // Mock login logic
-    console.log('Login attempt:', { email, password, twoFactorCode });
+  const handleLogin = async (emailOrUsername: string, password: string, twoFactorCode?: string) => {
+    // Mock login logic - simplified for admin
+    console.log('Login attempt:', { emailOrUsername, password, twoFactorCode });
     // In real app, this would authenticate and redirect
   };
 

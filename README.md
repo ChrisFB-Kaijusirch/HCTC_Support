@@ -1,50 +1,111 @@
-# React + TypeScript + Vite
+# Holdings CTC Support Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive client support portal for managing technical support requests, feature requests, and client relationships.
 
-Currently, two official plugins are available:
+## 🔐 Login Credentials
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Admin Access
+- **URL**: `/admin/login`
+- **Username**: `admin`
+- **Password**: `admin123`
+- **Features**: No 2FA required for admin login
 
-## Expanding the ESLint configuration
+### Client Access
+- **URL**: `/client/login`
+- **Test Email**: `john@techcorp.com`
+- **Password**: Any password
+- **2FA**: Required for some clients (any 6-digit code for demo)
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🚀 Features
 
-- Configure the top-level `parserOptions` property like this:
+### Admin Dashboard
+- **Ticket Management**: View, assign, and respond to support tickets
+- **Client Management**: CRM-style client database with company info and subscription details
+- **App Management**: Manage supported applications and their details
+- **Knowledge Base**: Create and manage help articles
+- **Feature Requests**: Track and manage client feature requests
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Client Portal
+- **Ticket Submission**: Submit support tickets with app-specific details
+- **Ticket Tracking**: Track ticket status and view conversation history
+- **Feature Requests**: Submit and vote on feature requests
+- **Knowledge Base**: Search and browse help articles
+- **QR Code Setup**: New client onboarding with 2FA setup
+
+### Security Features
+- **Admin**: Simple username/password authentication
+- **Clients**: Email-based login with optional 2FA
+- **QR Code Access**: Secure client onboarding process
+
+## 🗄️ Database Integration
+
+### Current Implementation
+- Mock data for development and testing
+- In-memory data storage
+
+### Recommended Production Database
+Since Amazon SimpleDB has been deprecated (2018), we recommend:
+
+#### **Amazon DynamoDB** (Recommended)
+- Modern NoSQL database service
+- Serverless and fully managed
+- Better performance and features than SimpleDB
+- Seamless AWS integration
+
+#### **Alternative NoSQL Options**
+- **MongoDB Atlas**: Cloud-hosted MongoDB
+- **Firebase Firestore**: Google's NoSQL database
+- **Supabase**: PostgreSQL with real-time features
+
+### Database Schema Design
+The application is designed with the following entities:
+- **Clients**: Company info, contact details, subscriptions
+- **Tickets**: Support requests with status tracking
+- **Apps**: Supported applications and versions
+- **Feature Requests**: Client suggestions and voting
+- **Knowledge Base**: Help articles and documentation
+- **Users**: Authentication and access control
+
+## 🛠️ Development
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+```bash
+npm install
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+### Development Server
+```bash
+npm run dev
 ```
+
+### Build for Production
+```bash
+npm run build
+```
+
+## 📱 Mobile Responsive
+The portal is fully responsive and works on:
+- Desktop computers
+- Tablets
+- Mobile phones
+
+## 🔧 Configuration
+
+### Environment Variables
+For production deployment, configure:
+- Database connection strings
+- Email service credentials
+- Authentication providers
+- File upload storage
+
+### Customization
+- Update branding in `src/components/Layout/Header.tsx`
+- Modify color scheme in `tailwind.config.js`
+- Add custom business logic in respective page components
+
+## 📞 Support
+For technical support or questions about this portal, contact the development team.

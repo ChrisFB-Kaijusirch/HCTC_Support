@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, Shield, Smartphone } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Shield, User } from 'lucide-react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
 import Input from '../UI/Input';
 
 interface LoginFormProps {
   userType: 'admin' | 'client';
-  onLogin: (email: string, password: string, twoFactorCode?: string) => Promise<void>;
+  onLogin: (emailOrUsername: string, password: string, twoFactorCode?: string) => Promise<void>;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
-  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [showTwoFactor, setShowTwoFactor] = useState(false);
@@ -24,20 +25,33 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
     setError('');
 
     try {
-      if (!showTwoFactor) {
-        // First step: email and password
-        // Simulate checking if 2FA is required
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For demo purposes, assume 2FA is required for admin and some clients
-        if (userType === 'admin' || email === 'john@techcorp.com') {
-          setShowTwoFactor(true);
+      if (userType === 'admin') {
+        // Admin login - direct authentication without 2FA
+        if (emailOrUsername === 'admin' && password === 'admin123') {
+          // Simulate successful login
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          navigate('/admin/dashboard');
         } else {
-          await onLogin(email, password);
+          setError('Invalid username or password');
         }
       } else {
-        // Second step: 2FA verification
-        await onLogin(email, password, twoFactorCode);
+        // Client login flow with 2FA
+        if (!showTwoFactor) {
+          // First step: email and password
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // For demo purposes, assume 2FA is required for some clients
+          if (emailOrUsername === 'john@techcorp.com') {
+            setShowTwoFactor(true);
+          } else {
+            // Direct login for clients without 2FA
+            navigate('/client/dashboard');
+          }
+        } else {
+          // Second step: 2FA verification for clients
+          await new Promise(resolve => setTimeout(resolve, 500));
+          navigate('/client/dashboard');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -77,12 +91,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             {!showTwoFactor ? (
               <>
                 <Input
-                  label="Email Address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  icon={Mail}
+                  label={userType === 'admin' ? 'Username' : 'Email Address'}
+                  type={userType === 'admin' ? 'text' : 'email'}
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  placeholder={userType === 'admin' ? 'Enter your username' : 'Enter your email'}
+                  icon={userType === 'admin' ? User : Mail}
                   required
                 />
                 
@@ -99,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             ) : (
               <div className="space-y-4">
                 <div className="text-center">
-                  <Smartphone className="w-12 h-12 text-primary-600 mx-auto mb-2" />
+                  <Shield className="w-12 h-12 text-primary-600 mx-auto mb-2" />
                   <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
                   <p className="text-sm text-gray-600">
                     Enter the 6-digit code from your authenticator app
@@ -161,14 +175,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             </div>
           )}
 
-          <div className="mt-6 text-center">
-            <Link
-              to="/forgot-password"
-              className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
-            >
-              Forgot your password?
-            </Link>
-          </div>
+          {userType === 'admin' ? (
+            <div className="mt-6 text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-6 text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+          )}
         </Card>
 
         {userType === 'client' && (
@@ -185,6 +210,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
                   Set Up Account with QR Code
                 </Button>
               </Link>
+            </div>
+          </Card>
+        )}
+
+        {/* Admin Login Credentials Helper */}
+        {userType === 'admin' && (
+          <Card className="bg-blue-50 border-blue-200">
+            <div className="text-center">
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">
+                Demo Credentials
+              </h3>
+              <div className="text-xs text-blue-800 space-y-1">
+                <p><strong>Username:</strong> admin</p>
+                <p><strong>Password:</strong> admin123</p>
+              </div>
             </div>
           </Card>
         )}
