@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { HelpCircle, Search, User, Settings, Shield, LogIn, LogOut, ChevronDown } from 'lucide-react';
+import { HelpCircle, Search, User, Settings, Shield, LogIn, LogOut, ChevronDown, Users, CreditCard } from 'lucide-react';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -132,6 +132,16 @@ const Header: React.FC = () => {
                 >
                   Applications
                 </Link>
+                <Link
+                  to="/admin/invoices"
+                  className={`text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/admin/invoices') 
+                      ? 'text-primary-600' 
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
+                >
+                  Billing
+                </Link>
               </>
             )}
 
@@ -220,6 +230,28 @@ const Header: React.FC = () => {
                         <User className="w-4 h-4" />
                         <span>Profile</span>
                       </Link>
+                      
+                      {userType === 'client' && (
+                        <>
+                          <Link
+                            to="/client/users"
+                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <Users className="w-4 h-4" />
+                            <span>Manage Users</span>
+                          </Link>
+                          
+                          <Link
+                            to="/client/billing"
+                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            <span>Billing</span>
+                          </Link>
+                        </>
+                      )}
                       
                       <button
                         onClick={() => setShowUserDropdown(false)}

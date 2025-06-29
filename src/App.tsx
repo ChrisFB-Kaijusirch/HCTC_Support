@@ -9,7 +9,10 @@ import KnowledgeBaseArticle from './pages/KnowledgeBaseArticle';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import ClientManagement from './pages/Admin/ClientManagement';
 import AppManagement from './pages/Admin/AppManagement';
+import InvoiceManagement from './pages/Admin/InvoiceManagement';
 import ClientDashboard from './pages/Client/ClientDashboard';
+import UserManagement from './pages/Client/UserManagement';
+import Billing from './pages/Client/Billing';
 import FeatureRequestsList from './pages/FeatureRequests/FeatureRequestsList';
 import LoginForm from './components/Auth/LoginForm';
 import QRSetup from './components/Auth/QRSetup';
@@ -49,9 +52,12 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/clients" element={<ClientManagement />} />
           <Route path="/admin/apps" element={<AppManagement />} />
+          <Route path="/admin/invoices" element={<InvoiceManagement />} />
           
           {/* Client Routes */}
           <Route path="/client/dashboard" element={<ClientDashboard />} />
+          <Route path="/client/users" element={<UserManagement />} />
+          <Route path="/client/billing" element={<Billing />} />
         </Routes>
       </Layout>
     </Router>

@@ -66,6 +66,8 @@ export interface Client {
   lastActivity: string;
   totalTickets: number;
   totalFeatureRequests: number;
+  billingInfo: BillingInfo;
+  primaryUserId: string;
 }
 
 export interface App {
@@ -94,6 +96,68 @@ export interface FeatureRequest {
   adminNotes?: string;
 }
 
+export interface User {
+  id: string;
+  clientId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  permissions: UserPermission[];
+  isActive: boolean;
+  isPrimary: boolean;
+  twoFactorEnabled: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface BillingInfo {
+  plan: 'Basic' | 'Professional' | 'Enterprise';
+  monthlyRate: number;
+  currency: 'USD' | 'EUR' | 'GBP';
+  billingCycle: 'monthly' | 'quarterly' | 'annually';
+  nextBillingDate: string;
+  paymentMethod: 'credit_card' | 'bank_transfer' | 'invoice';
+  billingAddress: Address;
+  taxId?: string;
+}
+
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface Invoice {
+  id: string;
+  clientId: string;
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  status: InvoiceStatus;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  currency: string;
+  paymentTerms: string;
+  notes?: string;
+  paidDate?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  appId?: string;
+}
+
 export type IssueType = 
   | 'Bug Report'
   | 'Feature Request'
@@ -109,14 +173,28 @@ export type TicketStatus = 'Open' | 'In Progress' | 'Waiting for Response' | 'Re
 
 export type FeatureRequestStatus = 'Submitted' | 'Under Review' | 'Planned' | 'In Development' | 'Completed' | 'Rejected';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'client';
-  clientId?: string;
-  twoFactorEnabled: boolean;
-  createdAt: Date;
+export type UserRole = 'primary' | 'admin' | 'user' | 'viewer';
+
+export type UserPermission = 
+  | 'tickets.create'
+  | 'tickets.view'
+  | 'tickets.manage'
+  | 'users.create'
+  | 'users.view'
+  | 'users.manage'
+  | 'billing.view'
+  | 'billing.manage'
+  | 'features.create'
+  | 'features.view'
+  | 'features.vote';
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  client: Client | null;
+  loading: boolean;
 }
 
 export interface TicketFilters {
@@ -139,11 +217,4 @@ export interface ClientFilters {
     start: Date;
     end: Date;
   };
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-  client: Client | null;
-  loading: boolean;
 }
