@@ -15,7 +15,10 @@
     "react-router-dom": "^6.20.1",
     "lucide-react": "^0.294.0",
     "date-fns": "^2.30.0",
-    "@headlessui/react": "^1.7.17"
+    "@headlessui/react": "^1.7.17",
+    "@aws-sdk/client-dynamodb": "^3.478.0",
+    "@aws-sdk/lib-dynamodb": "^3.478.0",
+    "@aws-sdk/credential-providers": "^3.478.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",

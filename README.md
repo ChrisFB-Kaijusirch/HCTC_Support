@@ -1,6 +1,6 @@
 # Holdings CTC Support Portal
 
-A comprehensive client support portal for managing technical support requests, feature requests, and client relationships.
+A comprehensive client support portal for managing technical support requests, feature requests, and client relationships with AWS DynamoDB integration.
 
 ## 🔐 Login Credentials
 
@@ -39,38 +39,64 @@ A comprehensive client support portal for managing technical support requests, f
 
 ## 🗄️ Database Integration
 
-### Current Implementation
-- Mock data for development and testing
-- In-memory data storage
+### AWS DynamoDB Setup
 
-### Recommended Production Database
-Since Amazon SimpleDB has been deprecated (2018), we recommend:
+This application is configured to use **Amazon DynamoDB** as the primary database. DynamoDB's free tier includes:
+- **25 GB** of storage
+- **25 read/write capacity units**
+- Perfect for getting started!
 
-#### **Amazon DynamoDB** (Recommended)
-- Modern NoSQL database service
-- Serverless and fully managed
-- Better performance and features than SimpleDB
-- Seamless AWS integration
+#### **Quick Setup Steps:**
 
-#### **Alternative NoSQL Options**
+1. **Create AWS Account** (if you haven't already)
+   - Go to [aws.amazon.com](https://aws.amazon.com)
+   - Sign up for a free account
+
+2. **Get AWS Credentials**
+   - Go to AWS Console → IAM → Users
+   - Create a new user with DynamoDB permissions
+   - Generate Access Key ID and Secret Access Key
+
+3. **Configure Environment Variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file with your AWS credentials:
+   ```env
+   VITE_AWS_REGION=us-east-1
+   VITE_AWS_ACCESS_KEY_ID=your_access_key_here
+   VITE_AWS_SECRET_ACCESS_KEY=your_secret_key_here
+   ```
+
+4. **Create DynamoDB Tables**
+   ```bash
+   node src/scripts/setup-dynamodb-tables.js
+   ```
+
+#### **Database Schema**
+The application uses these DynamoDB tables:
+- **holdings-ctc-clients**: Client information and subscriptions
+- **holdings-ctc-tickets**: Support tickets and conversations
+- **holdings-ctc-apps**: Supported applications and versions
+- **holdings-ctc-feature-requests**: Client feature suggestions
+- **holdings-ctc-knowledge-base**: Help articles and documentation
+- **holdings-ctc-users**: User authentication and access control
+
+#### **Development Mode**
+If AWS credentials are not configured, the app automatically falls back to mock data for development.
+
+### Alternative Database Options
 - **MongoDB Atlas**: Cloud-hosted MongoDB
 - **Firebase Firestore**: Google's NoSQL database
 - **Supabase**: PostgreSQL with real-time features
-
-### Database Schema Design
-The application is designed with the following entities:
-- **Clients**: Company info, contact details, subscriptions
-- **Tickets**: Support requests with status tracking
-- **Apps**: Supported applications and versions
-- **Feature Requests**: Client suggestions and voting
-- **Knowledge Base**: Help articles and documentation
-- **Users**: Authentication and access control
 
 ## 🛠️ Development
 
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
+- AWS Account (for production)
 
 ### Installation
 ```bash
@@ -96,16 +122,72 @@ The portal is fully responsive and works on:
 ## 🔧 Configuration
 
 ### Environment Variables
-For production deployment, configure:
-- Database connection strings
-- Email service credentials
-- Authentication providers
-- File upload storage
+```env
+# AWS Configuration
+VITE_AWS_REGION=us-east-1
+VITE_AWS_ACCESS_KEY_ID=your_access_key_here
+VITE_AWS_SECRET_ACCESS_KEY=your_secret_key_here
+
+# DynamoDB Tables (optional, uses defaults if not set)
+VITE_DYNAMODB_CLIENTS_TABLE=holdings-ctc-clients
+VITE_DYNAMODB_TICKETS_TABLE=holdings-ctc-tickets
+VITE_DYNAMODB_APPS_TABLE=holdings-ctc-apps
+VITE_DYNAMODB_FEATURE_REQUESTS_TABLE=holdings-ctc-feature-requests
+VITE_DYNAMODB_KNOWLEDGE_BASE_TABLE=holdings-ctc-knowledge-base
+VITE_DYNAMODB_USERS_TABLE=holdings-ctc-users
+
+# Application Settings
+VITE_APP_NAME=Holdings CTC Support Portal
+VITE_SUPPORT_EMAIL=support@holdingsctc.com
+```
+
+### AWS IAM Permissions
+Your AWS user needs these DynamoDB permissions:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:ListTables",
+        "dynamodb:PutItem",
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Scan",
+        "dynamodb:Query"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/holdings-ctc-*"
+    }
+  ]
+}
+```
 
 ### Customization
 - Update branding in `src/components/Layout/Header.tsx`
 - Modify color scheme in `tailwind.config.js`
 - Add custom business logic in respective page components
 
+## 💰 Cost Estimation
+
+### DynamoDB Free Tier (Monthly)
+- **Storage**: 25 GB free
+- **Read/Write**: 25 units each free
+- **Estimated cost**: $0 for small to medium usage
+
+### Beyond Free Tier
+- **Storage**: $0.25 per GB/month
+- **Read/Write**: $0.25 per million requests
+- **Typical monthly cost**: $5-20 for small business
+
 ## 📞 Support
 For technical support or questions about this portal, contact the development team.
+
+## 🔒 Security Best Practices
+- Store AWS credentials securely (never commit to git)
+- Use IAM roles with minimal permissions
+- Enable AWS CloudTrail for audit logging
+- Consider using AWS Secrets Manager for production
