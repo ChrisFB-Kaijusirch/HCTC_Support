@@ -40,7 +40,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
               id: 'admin_setup',
               username: 'admin',
               email: 'admin@hctc.com',
-              password: 'admin123',
+              password: 'YLRq%ZzU7CIBxLPI',
               role: 'super_admin',
               status: 'active',
               createdAt: new Date().toISOString(),
@@ -48,7 +48,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             };
             
             await dynamoDBService.create('holdings-ctc-admin-users', defaultAdmin);
-            setError('Default admin created. Login with: admin / admin123');
+            setError('Default admin created. Login with: admin / YLRq%ZzU7CIBxLPI');
             return;
           }
           
@@ -91,7 +91,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
           console.error('Admin login error:', error);
           
           // Fallback: if AWS is not working, allow hardcoded login for emergency access
-          if (emailOrUsername === 'admin' && password === 'admin123') {
+          if (emailOrUsername === 'admin' && password === 'YLRq%ZzU7CIBxLPI') {
             console.log('Using emergency fallback login');
             await new Promise(resolve => setTimeout(resolve, 1000));
             navigate('/admin/dashboard');
