@@ -48,17 +48,25 @@ class HybridDynamoDBService {
         console.log('⚠️ Proxy not available, checking direct AWS...');
         
         // Check if direct AWS is configured
-        const hasAwsCredentials = !!(
-          import.meta.env.VITE_AWS_ACCESS_KEY_ID && 
-          import.meta.env.VITE_AWS_SECRET_ACCESS_KEY
-        );
+        const accessKey = import.meta.env.VITE_AWS_ACCESS_KEY_ID;
+        const secretKey = import.meta.env.VITE_AWS_SECRET_ACCESS_KEY;
+        const region = import.meta.env.VITE_AWS_REGION;
+        
+        console.log('🔍 Environment check:', {
+          hasAccessKey: !!accessKey,
+          hasSecretKey: !!secretKey,
+          hasRegion: !!region,
+          accessKeyPrefix: accessKey?.substring(0, 4) || 'none'
+        });
+        
+        const hasAwsCredentials = !!(accessKey && secretKey);
         
         if (hasAwsCredentials) {
           this.currentMode = 'direct-aws';
           console.log('✅ Using direct AWS with credentials from environment');
         } else {
           this.currentMode = 'mock';
-          console.log('ℹ️ Using mock data (development mode)');
+          console.log('ℹ️ Using mock data (development mode) - no AWS credentials found');
         }
       }
     } catch (error) {
