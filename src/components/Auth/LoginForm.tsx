@@ -25,6 +25,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
     setIsLoading(true);
     setError('');
 
+    console.log('=== LOGIN ATTEMPT STARTED ===');
+    console.log('User Type:', userType);
+    console.log('Email/Username:', emailOrUsername);
+    console.log('Password length:', password.length);
+
     try {
       if (userType === 'admin') {
         // Admin login - check against database users
@@ -293,6 +298,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
               <div className="text-xs text-blue-800 space-y-1">
                 <p>Use your admin username/email and password</p>
                 <p>Contact system administrator if you need access</p>
+              </div>
+              
+              {/* Debug test buttons */}
+              <div className="mt-3 space-y-1">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    console.log('Testing emergency login...');
+                    navigate('/admin/dashboard');
+                  }}
+                  className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded"
+                >
+                  Emergency Access (Test)
+                </button>
               </div>
             </div>
           </Card>
