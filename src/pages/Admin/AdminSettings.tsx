@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 // Fixed import
 import Card from '../../components/UI/Card';
 import { Button } from '../../components/UI/Button';
-import { Input } from '../../components/UI/Input';
+import Input from '../../components/UI/Input';
 import { AlertCircle, CheckCircle, Settings, Shield, Users, Database } from 'lucide-react';
 import { dynamoDBService } from '../../services/dynamodb';
 
