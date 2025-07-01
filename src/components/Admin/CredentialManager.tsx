@@ -15,6 +15,7 @@ import {
   type EncryptedCredentials
 } from '../../utils/encryption';
 import { getAWSCredentials, clearAWSCache, testAWSConnection } from '../../config/secureAws';
+import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
 
 const CredentialManager: React.FC = () => {
   const [showCredentials, setShowCredentials] = useState(false);
@@ -85,12 +86,45 @@ const CredentialManager: React.FC = () => {
     }
   };
 
+  // Simple test function that bypasses complex secure config
+  const testSimpleAWSConnection = async (): Promise<boolean> => {
+    try {
+      const config = {
+        region: import.meta.env.VITE_AWS_REGION || 'ap-southeast-2',
+        credentials: {
+          accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
+          secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
+        },
+      };
+
+      console.log('Testing with simple config:', { 
+        region: config.region, 
+        hasAccessKey: !!config.credentials.accessKeyId,
+        hasSecretKey: !!config.credentials.secretAccessKey 
+      });
+
+      if (!config.credentials.accessKeyId || !config.credentials.secretAccessKey) {
+        throw new Error('Missing AWS credentials');
+      }
+
+      const client = new DynamoDBClient(config);
+      const command = new ListTablesCommand({});
+      const response = await client.send(command);
+      
+      console.log('AWS test successful:', response.TableNames?.length || 0, 'tables found');
+      return true;
+    } catch (error) {
+      console.error('AWS connection test failed:', error);
+      return false;
+    }
+  };
+
   const handleTestConnection = async () => {
     setIsLoading(true);
     setMessage(null);
 
     try {
-      const isConnected = await testAWSConnection(encryptionKey);
+      const isConnected = await testSimpleAWSConnection();
       setConnectionStatus(isConnected ? 'connected' : 'failed');
       setMessage({ 
         type: isConnected ? 'success' : 'error', 
