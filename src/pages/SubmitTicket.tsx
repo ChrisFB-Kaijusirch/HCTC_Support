@@ -100,9 +100,15 @@ const SubmitTicket: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('Submit button clicked!', e);
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
+    
+    console.log('Form validation passed, proceeding with submission');
 
     setIsSubmitting(true);
 

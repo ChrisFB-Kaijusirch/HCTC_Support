@@ -11,6 +11,8 @@ import ClientManagement from './pages/Admin/ClientManagement';
 import AppManagement from './pages/Admin/AppManagement';
 import ContentManagement from './pages/Admin/ContentManagement';
 import InvoiceManagement from './pages/Admin/InvoiceManagement';
+import AdminSettings from './pages/Admin/AdminSettings';
+import UserAccessControl from './pages/Admin/UserAccessControl';
 import ClientDashboard from './pages/Client/ClientDashboard';
 import UserManagement from './pages/Client/UserManagement';
 import Billing from './pages/Client/Billing';
@@ -55,6 +57,8 @@ function App() {
           <Route path="/admin/apps" element={<AppManagement />} />
           <Route path="/admin/content" element={<ContentManagement />} />
           <Route path="/admin/invoices" element={<InvoiceManagement />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/users" element={<UserAccessControl />} />
           
           {/* Client Routes */}
           <Route path="/client/dashboard" element={<ClientDashboard />} />

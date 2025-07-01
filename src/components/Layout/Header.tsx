@@ -123,6 +123,16 @@ const Header: React.FC = () => {
                   Clients
                 </Link>
                 <Link
+                  to="/admin/users"
+                  className={`text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/admin/users') 
+                      ? 'text-primary-600' 
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
+                >
+                  Users
+                </Link>
+                <Link
                   to="/admin/apps"
                   className={`text-sm font-medium transition-colors ${
                     location.pathname.startsWith('/admin/apps') 
@@ -151,6 +161,16 @@ const Header: React.FC = () => {
                   }`}
                 >
                   Billing
+                </Link>
+                <Link
+                  to="/admin/settings"
+                  className={`text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/admin/settings') 
+                      ? 'text-primary-600' 
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
+                >
+                  Settings
                 </Link>
               </>
             )}
