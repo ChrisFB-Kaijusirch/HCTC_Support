@@ -32,9 +32,19 @@ export const TABLE_NAMES = {
 
 // Utility function to check if AWS is configured
 export const isAWSConfigured = (): boolean => {
-  return !!(
-    import.meta.env.VITE_AWS_ACCESS_KEY_ID &&
-    import.meta.env.VITE_AWS_SECRET_ACCESS_KEY &&
-    import.meta.env.VITE_AWS_REGION
-  );
+  const accessKeyId = import.meta.env.VITE_AWS_ACCESS_KEY_ID;
+  const secretAccessKey = import.meta.env.VITE_AWS_SECRET_ACCESS_KEY;
+  const region = import.meta.env.VITE_AWS_REGION;
+  
+  console.log('AWS Configuration Debug:', {
+    accessKeyId: accessKeyId ? `SET (${accessKeyId.substring(0, 4)}...)` : 'NOT SET',
+    secretAccessKey: secretAccessKey ? `SET (${secretAccessKey.length} chars)` : 'NOT SET',
+    region: region || 'NOT SET',
+    allEnvVars: import.meta.env
+  });
+  
+  const isConfigured = !!(accessKeyId && secretAccessKey && region);
+  console.log('isAWSConfigured result:', isConfigured);
+  
+  return isConfigured;
 };
