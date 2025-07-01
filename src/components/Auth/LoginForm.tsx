@@ -41,11 +41,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
           
           // If no admin users exist, create a default one (first-time setup)
           if (adminUsers.length === 0 && emailOrUsername === 'setup' && password === 'setup123') {
+            const defaultAdminPassword = import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'TempPass123!';
+            const kaijusirchPassword = import.meta.env.VITE_KAIJUSIRCH_PASSWORD || 'TempPass456!';
+            
             const defaultAdmin = {
               id: 'admin_setup',
               username: 'admin',
               email: 'admin@hctc.com',
-              password: 'YLRq%ZzU7CIBxLPI',
+              password: defaultAdminPassword,
               role: 'super_admin',
               status: 'active',
               createdAt: new Date().toISOString(),
@@ -59,7 +62,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
               id: 'admin_kaijusirch',
               username: 'Kaijusirch',
               email: 'kaijusirch@hctc.com',
-              password: 'AkG3Da9SY##51CW#',
+              password: kaijusirchPassword,
               role: 'super_admin',
               status: 'active',
               createdAt: new Date().toISOString(),
@@ -67,7 +70,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             };
             
             await dynamoDBService.create('holdings-ctc-admin-users', kaijusirchAdmin);
-            setError('Default admin users created. Login with: admin / YLRq%ZzU7CIBxLPI or Kaijusirch / AkG3Da9SY##51CW#');
+            setError('Default admin users created. Check GitHub Secrets for login credentials.');
             return;
           }
           
