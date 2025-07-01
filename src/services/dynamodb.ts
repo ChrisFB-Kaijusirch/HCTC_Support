@@ -147,8 +147,37 @@ class DynamoDBService {
         case TABLE_NAMES.FEATURE_REQUESTS: return mockFeatureRequests as T[];
         case TABLE_NAMES.KNOWLEDGE_BASE: return mockKnowledgeBase as T[];
         case TABLE_NAMES.USERS: return mockUsers as T[];
+        case 'holdings-ctc-admin-users': 
+          // Return mock admin users for login
+          return [
+            {
+              id: 'admin_1',
+              username: 'admin',
+              email: 'admin@hctc.com',
+              password: 'YLRq%ZzU7CIBxLPI',
+              role: 'super_admin',
+              status: 'active',
+              createdAt: new Date().toISOString(),
+              permissions: ['all']
+            },
+            {
+              id: 'admin_2',
+              username: 'Kaijusirch',
+              email: 'kaijusirch@hctc.com',
+              password: 'AkG3Da9SY##51CW#',
+              role: 'super_admin',
+              status: 'active',
+              createdAt: new Date().toISOString(),
+              permissions: ['all']
+            }
+          ] as T[];
         default: return [];
       }
+    }
+
+    if (!dynamoDBDocClient) {
+      console.error('DynamoDB client not configured, but attempting to scan real table');
+      throw new Error('AWS DynamoDB not configured');
     }
 
     try {
