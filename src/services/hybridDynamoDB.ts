@@ -48,10 +48,14 @@ class HybridDynamoDBService {
         console.log('⚠️ Proxy not available, checking direct AWS...');
         
         // Check if direct AWS is configured
-        const awsConfig = directAWSService.getConfig?.();
-        if (awsConfig?.isConfigured) {
+        const hasAwsCredentials = !!(
+          import.meta.env.VITE_AWS_ACCESS_KEY_ID && 
+          import.meta.env.VITE_AWS_SECRET_ACCESS_KEY
+        );
+        
+        if (hasAwsCredentials) {
           this.currentMode = 'direct-aws';
-          console.log('✅ Using direct AWS with encryption');
+          console.log('✅ Using direct AWS with credentials from environment');
         } else {
           this.currentMode = 'mock';
           console.log('ℹ️ Using mock data (development mode)');
