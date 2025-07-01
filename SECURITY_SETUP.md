@@ -65,7 +65,7 @@ After deployment with secrets configured:
 1. **Visit your deployed site**
 2. **Use setup credentials**: `setup` / `setup123`
 3. **This creates admin users in DynamoDB**
-4. **Login with**: `admin` / `AdminSecure2025!` or `Kaijusirch` / `KaijuSecure2025!`
+4. **Login with your existing admin credentials** from the DynamoDB table
 
 ### 5. Test Connection
 

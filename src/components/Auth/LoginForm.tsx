@@ -39,35 +39,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
           console.log('Admin users:', adminUsers);
           console.log('Login attempt:', { emailOrUsername, password: '***', userType });
           
-          // If no admin users exist, create a default one (first-time setup)
-          if (adminUsers.length === 0 && emailOrUsername === 'setup' && password === 'setup123') {
-            const defaultAdmin = {
-              id: 'admin_setup',
-              username: 'admin',
-              email: 'admin@hctc.com',
-              password: 'AdminSecure2025!',
-              role: 'super_admin',
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              permissions: ['all']
-            };
-            
-            await dynamoDBService.create('holdings-ctc-admin-users', defaultAdmin);
-            
-            // Also create the Kaijusirch admin user
-            const kaijusirchAdmin = {
-              id: 'admin_kaijusirch',
-              username: 'Kaijusirch',
-              email: 'kaijusirch@hctc.com',
-              password: 'KaijuSecure2025!',
-              role: 'super_admin',
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              permissions: ['all']
-            };
-            
-            await dynamoDBService.create('holdings-ctc-admin-users', kaijusirchAdmin);
-            setError('Default admin users created. Login with: admin / AdminSecure2025! or Kaijusirch / KaijuSecure2025!');
+          // Since admin users already exist in DynamoDB, no setup needed
+          if (adminUsers.length === 0) {
+            setError('No admin users found in database. Please contact administrator.');
             return;
           }
           
@@ -99,12 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             await new Promise(resolve => setTimeout(resolve, 1000));
             navigate('/admin/dashboard');
           } else {
-            // If no admins exist, show setup instructions
-            if (adminUsers.length === 0) {
-              setError('No admin users found. Use "setup" / "setup123" to create the first admin.');
-            } else {
-              setError('Invalid username or password');
-            }
+            setError('Invalid username or password');
           }
         } catch (error) {
           console.error('Admin login error:', error);
