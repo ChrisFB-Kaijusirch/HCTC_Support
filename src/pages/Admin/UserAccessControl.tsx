@@ -116,6 +116,14 @@ export default function UserAccessControl() {
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showEditRole, setShowEditRole] = useState(false);
 
+  // --- User Creation Modal State ---
+  const [createUserName, setCreateUserName] = useState('');
+  const [createUserEmail, setCreateUserEmail] = useState('');
+  const [createUserPassword, setCreateUserPassword] = useState('');
+  const [createUserRole, setCreateUserRole] = useState('user');
+  const [createUserError, setCreateUserError] = useState('');
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+
   useEffect(() => {
     loadUsers();
   }, []);
@@ -414,6 +422,111 @@ export default function UserAccessControl() {
           </div>
         </div>
       )}
-    </div>
+    {/* Create User Modal */}
+    {showCreateUser && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-lg w-full p-6">
+          <h3 className="text-lg font-semibold mb-4">Create New User</h3>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setCreateUserError('');
+              setCreateUserLoading(true);
+              try {
+                await dynamoDBService.createUser({
+                  id: `user_${Date.now()}`,
+                  name: createUserName,
+                  email: createUserEmail,
+                  password: createUserPassword,
+                  role: createUserRole,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  status: 'active',
+                });
+                setShowCreateUser(false);
+                setCreateUserName('');
+                setCreateUserEmail('');
+                setCreateUserPassword('');
+                setCreateUserRole('user');
+                setCreateUserError('');
+                loadUsers();
+              } catch (err: any) {
+                setCreateUserError(err.message || 'Failed to create user');
+              } finally {
+                setCreateUserLoading(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <Input
+              label="Name"
+              value={createUserName}
+              onChange={e => setCreateUserName(e.target.value)}
+              required
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={createUserEmail}
+              onChange={e => setCreateUserEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={createUserPassword}
+              onChange={e => setCreateUserPassword(e.target.value)}
+              required
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select
+                value={createUserRole}
+                onChange={e => setCreateUserRole(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                required
+              >
+                {roles.map(role => (
+                  <option key={role.id} value={role.id}>{role.name}</option>
+                ))}
+              </select>
+            </div>
+            {createUserError && (
+              <div className="text-error-600 text-sm text-center bg-error-50 p-2 rounded-lg">{createUserError}</div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowCreateUser(false);
+                  setCreateUserName('');
+                  setCreateUserEmail('');
+                  setCreateUserPassword('');
+                  setCreateUserRole('user');
+                  setCreateUserError('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={createUserLoading}>
+                Create
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }
+
+// --- User Creation Modal State ---
+// Add these hooks at the top level of the component, after other useState hooks
+// (Insert this code after the last useState in the component)
+// const [createUserName, setCreateUserName] = useState('');
+// const [createUserEmail, setCreateUserEmail] = useState('');
+// const [createUserPassword, setCreateUserPassword] = useState('');
+// const [createUserRole, setCreateUserRole] = useState('user');
+// const [createUserError, setCreateUserError] = useState('');
+// const [createUserLoading, setCreateUserLoading] = useState(false);

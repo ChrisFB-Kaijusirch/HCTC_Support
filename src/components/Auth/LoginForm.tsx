@@ -69,8 +69,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
 
           if (validAdmin) {
             console.log('Login successful for:', validAdmin.username);
-            // Simulate successful login
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Call parent onLogin function
+            await onLogin(emailOrUsername, password);
+            // Navigate to dashboard
             navigate('/admin/dashboard');
           } else {
             setError('Invalid username or password');
@@ -82,20 +83,80 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
       } else {
         // Client login flow with 2FA
         if (!showTwoFactor) {
-          // First step: email and password
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // For demo purposes, assume 2FA is required for some clients
-          if (emailOrUsername === 'john@techcorp.com') {
-            setShowTwoFactor(true);
-          } else {
-            // Direct login for clients without 2FA
-            navigate('/client/dashboard');
+          // First step: email and password - check against database
+          try {
+            const clients = await dynamoDBService.scan('holdings-ctc-clients');
+            console.log('Clients found:', clients.length);
+            
+            const validClient = clients.find((client: any) => {
+              const emailMatch = client.email === emailOrUsername;
+              const statusMatch = client.status === 'active';
+              const hasTOTP = client.totpEnabled === true;
+              
+              console.log('Checking client:', {
+                email: client.email,
+                emailMatch,
+                statusMatch,
+                hasTOTP,
+                inputEmail: emailOrUsername
+              });
+              
+              return emailMatch && statusMatch && hasTOTP;
+            });
+
+            if (validClient) {
+              console.log('Valid client found, requiring 2FA:', validClient.email);
+              setShowTwoFactor(true);
+            } else {
+              setError('Account not found or 2FA not set up. Please set up your account first.');
+            }
+          } catch (error) {
+            console.error('Client login error:', error);
+            setError(`Login failed: ${error.message}`);
           }
         } else {
           // Second step: 2FA verification for clients
-          await new Promise(resolve => setTimeout(resolve, 500));
-          navigate('/client/dashboard');
+          try {
+            const clients = await dynamoDBService.scan('holdings-ctc-clients');
+            const client = clients.find((c: any) => c.email === emailOrUsername);
+            
+            if (client && client.totpSecret) {
+              // Import TOTP here
+              const { TOTP } = await import('otpauth');
+              
+              const totp = new TOTP({
+                issuer: 'Holdings CTC',
+                label: client.email,
+                algorithm: 'SHA1',
+                digits: 6,
+                period: 30,
+                secret: client.totpSecret
+              });
+
+              const isValid = totp.validate({
+                token: twoFactorCode,
+                window: 1
+              });
+
+              if (isValid !== null) {
+                // Update last login
+                await dynamoDBService.put('holdings-ctc-clients', {
+                  ...client,
+                  lastLogin: new Date().toISOString()
+                });
+                
+                await onLogin(emailOrUsername, password, twoFactorCode);
+                navigate('/client/dashboard');
+              } else {
+                setError('Invalid authentication code. Please try again.');
+              }
+            } else {
+              setError('2FA not configured. Please set up your account.');
+            }
+          } catch (error) {
+            console.error('2FA verification error:', error);
+            setError('Failed to verify authentication code.');
+          }
         }
       }
     } catch (err) {

@@ -11,7 +11,7 @@ const FeatureRequestsList = React.lazy(() => import('../pages/FeatureRequests/Fe
 
 // Auth components
 const LoginForm = React.lazy(() => import('../components/Auth/LoginForm'));
-const QRSetup = React.lazy(() => import('../components/Auth/QRSetup'));
+const QRSetup = React.lazy(() => import('../pages/QRSetup'));
 
 // Admin components
 const AdminDashboard = React.lazy(() => import('../pages/Admin/AdminDashboard'));

@@ -3,8 +3,7 @@ import {
   GetCommand, 
   UpdateCommand, 
   DeleteCommand, 
-  ScanCommand, 
-  QueryCommand 
+  ScanCommand 
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoDBDocClient, TABLE_NAMES, isAWSConfigured } from '../config/aws';
 import { 
@@ -38,7 +37,7 @@ class DynamoDBService {
   }
 
   // Generic CRUD operations
-  async create<T>(tableName: string, item: T): Promise<T> {
+  async create<T extends Record<string, any>>(tableName: string, item: T): Promise<T> {
     console.log('Creating item in table:', tableName, 'Item:', item);
     try {
       const command = new PutCommand({
