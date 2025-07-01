@@ -5,4 +5,14 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/HCTC_Support/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+        entryFileNames: 'assets/app-[hash].js',
+        chunkFileNames: 'assets/chunk-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
+  }
 })
