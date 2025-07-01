@@ -46,10 +46,8 @@ export default function AdminSettings() {
     setMessage(null);
 
     try {
-      // Validate current password (in real app, this would check against stored hash)
-      if (passwordForm.currentPassword !== 'admin123') {
-        throw new Error('Current password is incorrect');
-      }
+      // TODO: In a real app, validate current password against database
+      // For now, skip current password validation
 
       if (passwordForm.newPassword !== passwordForm.confirmPassword) {
         throw new Error('New passwords do not match');
@@ -291,19 +289,6 @@ export default function AdminSettings() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Current Admin Users</h2>
             <div className="space-y-3">
-              {/* Current hardcoded admin */}
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div>
-                  <h3 className="font-medium">admin</h3>
-                  <p className="text-sm text-gray-600">admin@hctc.com</p>
-                  <span className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Super Admin (Hardcoded)</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Active</p>
-                  <p className="text-xs text-gray-500">Current Session</p>
-                </div>
-              </div>
-              
               {adminUsers.map((admin) => (
                 <div key={admin.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
