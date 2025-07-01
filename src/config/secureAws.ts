@@ -26,8 +26,9 @@ const ENCRYPTED_AWS_CREDENTIALS: EncryptedCredentials | null = (() => {
       };
     }
     
-    // Fallback to localStorage
-    return getStoredEncryptedCredentials();
+    // TEMPORARILY DISABLED: Fallback to localStorage to fix decryption issues
+    // return getStoredEncryptedCredentials();
+    return null;
   } catch (error) {
     console.warn('No encrypted credentials found:', error);
     return null;
@@ -38,7 +39,7 @@ const ENCRYPTED_AWS_CREDENTIALS: EncryptedCredentials | null = (() => {
 const PLAIN_AWS_CREDENTIALS = {
   accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
   secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
-  region: import.meta.env.VITE_AWS_REGION || 'us-east-1'
+  region: import.meta.env.VITE_AWS_REGION || 'ap-southeast-2'
 };
 
 let cachedCredentials: DecryptedCredentials | null = null;
@@ -54,8 +55,15 @@ export function getAWSCredentials(encryptionKey?: string): DecryptedCredentials 
   }
 
   try {
-    // Try encrypted credentials first
-    if (ENCRYPTED_AWS_CREDENTIALS) {
+    // Try plain credentials first (GitHub Secrets)
+    if (PLAIN_AWS_CREDENTIALS.accessKeyId && PLAIN_AWS_CREDENTIALS.secretAccessKey) {
+      console.log('Using GitHub Secrets AWS credentials');
+      cachedCredentials = PLAIN_AWS_CREDENTIALS;
+      return PLAIN_AWS_CREDENTIALS;
+    }
+    
+    // Fallback to encrypted credentials
+    if (ENCRYPTED_AWS_CREDENTIALS && encryptionKey) {
       console.log('Using encrypted AWS credentials');
       const decrypted = decryptCredentials(ENCRYPTED_AWS_CREDENTIALS, encryptionKey);
       
@@ -65,7 +73,7 @@ export function getAWSCredentials(encryptionKey?: string): DecryptedCredentials 
       }
     }
     
-    // Fallback to plain credentials
+    // Final fallback
     if (PLAIN_AWS_CREDENTIALS.accessKeyId && PLAIN_AWS_CREDENTIALS.secretAccessKey) {
       console.log('Using plain AWS credentials (fallback)');
       if (validateCredentials(PLAIN_AWS_CREDENTIALS)) {
