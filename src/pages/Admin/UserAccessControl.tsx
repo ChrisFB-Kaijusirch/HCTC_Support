@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../components/UI/Card';
+import Card from '../../components/UI/Card';
 import { Button } from '../../components/UI/Button';
 import { Input } from '../../components/UI/Input';
-import { Badge } from '../../components/UI/Badge';
+import Badge from '../../components/UI/Badge';
 import { 
   Users, 
   Shield, 
