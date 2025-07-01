@@ -2,109 +2,57 @@ import React, { useState, useEffect } from 'react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
 import Input from '../UI/Input';
-import { Shield, Key, Eye, EyeOff, Download, Upload, Trash2 } from 'lucide-react';
-import {
-  encryptCredentials,
-  decryptCredentials,
-  getStoredEncryptedCredentials,
-  storeEncryptedCredentials,
-  clearStoredCredentials,
-  generateEncryptionKey,
-  validateCredentials,
-  type DecryptedCredentials,
-  type EncryptedCredentials
-} from '../../utils/encryption';
-import { getAWSCredentials, clearAWSCache, testAWSConnection } from '../../config/secureAws';
+import { Shield, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
+
+interface Credentials {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+}
 
 const CredentialManager: React.FC = () => {
   const [showCredentials, setShowCredentials] = useState(false);
-  const [encryptionKey, setEncryptionKey] = useState('');
-  const [credentials, setCredentials] = useState<DecryptedCredentials>({
-    accessKeyId: '',
-    secretAccessKey: '',
-    region: 'ap-southeast-2'
-  });
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
+  const [envCredentials, setEnvCredentials] = useState<Credentials>({
+    accessKeyId: '',
+    secretAccessKey: '',
+    region: ''
+  });
 
   useEffect(() => {
-    // Check if there are stored encrypted credentials
-    const stored = getStoredEncryptedCredentials();
-    setHasStoredCredentials(!!stored);
-    
-    // Try to load current credentials
-    const current = getAWSCredentials();
-    if (current) {
-      setCredentials(current);
-    }
+    // Load current environment variables
+    setEnvCredentials({
+      accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
+      region: import.meta.env.VITE_AWS_REGION || 'ap-southeast-2'
+    });
   }, []);
 
-  const handleEncrypt = () => {
-    if (!validateCredentials(credentials)) {
-      setMessage({ type: 'error', text: 'Please provide valid AWS credentials' });
-      return;
-    }
-
-    if (!encryptionKey.trim()) {
-      setMessage({ type: 'error', text: 'Please provide an encryption key' });
-      return;
-    }
-
-    try {
-      const encrypted = encryptCredentials(credentials, encryptionKey);
-      storeEncryptedCredentials(encrypted);
-      setHasStoredCredentials(true);
-      clearAWSCache();
-      setMessage({ type: 'success', text: 'Credentials encrypted and stored successfully' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to encrypt credentials' });
-    }
+  const validateCredentials = (creds: Credentials): boolean => {
+    return !!(creds.accessKeyId && creds.secretAccessKey && creds.region);
   };
 
-  const handleDecrypt = () => {
-    const stored = getStoredEncryptedCredentials();
-    if (!stored) {
-      setMessage({ type: 'error', text: 'No encrypted credentials found' });
-      return;
-    }
-
-    if (!encryptionKey.trim()) {
-      setMessage({ type: 'error', text: 'Please provide the encryption key' });
-      return;
-    }
-
-    try {
-      const decrypted = decryptCredentials(stored, encryptionKey);
-      setCredentials(decrypted);
-      clearAWSCache();
-      setMessage({ type: 'success', text: 'Credentials decrypted successfully' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to decrypt credentials - check encryption key' });
-    }
-  };
-
-  // Simple test function that bypasses complex secure config
-  const testSimpleAWSConnection = async (): Promise<boolean> => {
+  const testAWSConnection = async (): Promise<boolean> => {
     try {
       const config = {
-        region: import.meta.env.VITE_AWS_REGION || 'ap-southeast-2',
+        region: envCredentials.region || 'ap-southeast-2',
         credentials: {
-          accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
-          secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
+          accessKeyId: envCredentials.accessKeyId,
+          secretAccessKey: envCredentials.secretAccessKey,
         },
       };
 
-      console.log('Testing with simple config:', { 
+      console.log('Testing AWS connection:', { 
         region: config.region, 
         hasAccessKey: !!config.credentials.accessKeyId,
         hasSecretKey: !!config.credentials.secretAccessKey 
       });
 
       if (!config.credentials.accessKeyId || !config.credentials.secretAccessKey) {
-        throw new Error('Missing AWS credentials');
+        throw new Error('Missing AWS credentials in environment variables');
       }
 
       const client = new DynamoDBClient(config);
@@ -112,9 +60,12 @@ const CredentialManager: React.FC = () => {
       const response = await client.send(command);
       
       console.log('AWS test successful:', response.TableNames?.length || 0, 'tables found');
+      setMessage({ type: 'success', text: `Connection successful! Found ${response.TableNames?.length || 0} DynamoDB tables.` });
       return true;
     } catch (error) {
       console.error('AWS connection test failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+      setMessage({ type: 'error', text: `Connection failed: ${errorMessage}` });
       return false;
     }
   };
@@ -124,12 +75,8 @@ const CredentialManager: React.FC = () => {
     setMessage(null);
 
     try {
-      const isConnected = await testSimpleAWSConnection();
+      const isConnected = await testAWSConnection();
       setConnectionStatus(isConnected ? 'connected' : 'failed');
-      setMessage({ 
-        type: isConnected ? 'success' : 'error', 
-        text: isConnected ? 'AWS connection successful' : 'AWS connection failed' 
-      });
     } catch (error) {
       setConnectionStatus('failed');
       setMessage({ type: 'error', text: 'Connection test failed' });
@@ -138,45 +85,12 @@ const CredentialManager: React.FC = () => {
     }
   };
 
-  const handleGenerateKey = () => {
-    const newKey = generateEncryptionKey();
-    setEncryptionKey(newKey);
-    setMessage({ type: 'info', text: 'New encryption key generated. Save this key securely!' });
-  };
-
-  const handleClearStored = () => {
-    clearStoredCredentials();
-    clearAWSCache();
-    setHasStoredCredentials(false);
-    setMessage({ type: 'info', text: 'Stored credentials cleared' });
-  };
-
-  const downloadEncryptedCredentials = () => {
-    const stored = getStoredEncryptedCredentials();
-    if (!stored) {
-      setMessage({ type: 'error', text: 'No encrypted credentials to download' });
-      return;
-    }
-
-    const blob = new Blob([JSON.stringify(stored, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'encrypted-aws-credentials.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    setMessage({ type: 'success', text: 'Encrypted credentials downloaded' });
-  };
-
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary-600" />
-          AWS Credential Manager
+          AWS Configuration Status
         </h2>
         
         {message && (
@@ -190,31 +104,34 @@ const CredentialManager: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Credentials Input */}
+          {/* Current Environment Variables */}
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">AWS Credentials</h3>
+            <h3 className="font-medium text-gray-900">Current Environment Variables</h3>
             
             <Input
               label="AWS Access Key ID"
               type={showCredentials ? 'text' : 'password'}
-              value={credentials.accessKeyId}
-              onChange={(e) => setCredentials({...credentials, accessKeyId: e.target.value})}
-              placeholder="AKIA..."
+              value={envCredentials.accessKeyId}
+              readOnly
+              placeholder="Not configured"
+              helperText="Set via VITE_AWS_ACCESS_KEY_ID"
             />
             
             <Input
               label="AWS Secret Access Key"
               type={showCredentials ? 'text' : 'password'}
-              value={credentials.secretAccessKey}
-              onChange={(e) => setCredentials({...credentials, secretAccessKey: e.target.value})}
-              placeholder="Secret key..."
+              value={envCredentials.secretAccessKey}
+              readOnly
+              placeholder="Not configured"
+              helperText="Set via VITE_AWS_SECRET_ACCESS_KEY"
             />
             
             <Input
               label="AWS Region"
-              value={credentials.region}
-              onChange={(e) => setCredentials({...credentials, region: e.target.value})}
+              value={envCredentials.region}
+              readOnly
               placeholder="ap-southeast-2"
+              helperText="Set via VITE_AWS_REGION"
             />
 
             <Button
@@ -227,113 +144,60 @@ const CredentialManager: React.FC = () => {
             </Button>
           </div>
 
-          {/* Encryption Controls */}
+          {/* Connection Status */}
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">Encryption</h3>
+            <h3 className="font-medium text-gray-900">Connection Status</h3>
             
-            <Input
-              label="Encryption Key"
-              type="password"
-              value={encryptionKey}
-              onChange={(e) => setEncryptionKey(e.target.value)}
-              placeholder="Enter encryption key..."
-              helperText="Keep this key safe - you'll need it to decrypt"
-            />
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGenerateKey}
-                icon={Key}
-              >
-                Generate Key
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={handleEncrypt}
-                disabled={!validateCredentials(credentials) || !encryptionKey}
-                size="sm"
-              >
-                Encrypt & Store
-              </Button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">Environment Variables</span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${validateCredentials(envCredentials) ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="text-sm text-gray-600">
+                    {validateCredentials(envCredentials) ? 'Configured' : 'Missing'}
+                  </span>
+                </div>
+              </div>
               
-              <Button
-                variant="outline"
-                onClick={handleDecrypt}
-                disabled={!hasStoredCredentials || !encryptionKey}
-                size="sm"
-              >
-                Decrypt & Load
-              </Button>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">DynamoDB Connection</span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    connectionStatus === 'connected' ? 'bg-green-500' :
+                    connectionStatus === 'failed' ? 'bg-red-500' : 'bg-gray-300'
+                  }`} />
+                  <span className="text-sm text-gray-600">
+                    {connectionStatus === 'connected' ? 'Connected' : 
+                     connectionStatus === 'failed' ? 'Failed' : 'Unknown'}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            <Button
+              onClick={handleTestConnection}
+              disabled={isLoading || !validateCredentials(envCredentials)}
+              className="w-full"
+              icon={isLoading ? RefreshCw : Shield}
+            >
+              {isLoading ? 'Testing Connection...' : 'Test AWS Connection'}
+            </Button>
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Configuration Instructions */}
         <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={handleTestConnection}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-              icon={Shield}
-            >
-              {isLoading ? 'Testing...' : 'Test Connection'}
-            </Button>
-
-            {hasStoredCredentials && (
-              <>
-                <Button
-                  onClick={downloadEncryptedCredentials}
-                  variant="outline"
-                  size="sm"
-                  icon={Download}
-                >
-                  Download Encrypted
-                </Button>
-                
-                <Button
-                  onClick={handleClearStored}
-                  variant="outline"
-                  size="sm"
-                  icon={Trash2}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Clear Stored
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Status Indicators */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${hasStoredCredentials ? 'bg-green-500' : 'bg-gray-300'}`} />
-              <span className="text-sm text-gray-600">
-                {hasStoredCredentials ? 'Encrypted credentials stored' : 'No stored credentials'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'connected' ? 'bg-green-500' :
-                connectionStatus === 'failed' ? 'bg-red-500' : 'bg-gray-300'
-              }`} />
-              <span className="text-sm text-gray-600">
-                Connection: {connectionStatus}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${validateCredentials(credentials) ? 'bg-green-500' : 'bg-gray-300'}`} />
-              <span className="text-sm text-gray-600">
-                {validateCredentials(credentials) ? 'Valid format' : 'Invalid format'}
-              </span>
-            </div>
+          <h3 className="font-medium text-gray-900 mb-3">Configuration Instructions</h3>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2">To configure AWS credentials:</h4>
+            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+              <li>Go to GitHub → Repository → Settings → Secrets and variables → Actions</li>
+              <li>Add these repository secrets:</li>
+              <li className="ml-4">• <code>VITE_AWS_ACCESS_KEY_ID</code>: Your AWS Access Key ID</li>
+              <li className="ml-4">• <code>VITE_AWS_SECRET_ACCESS_KEY</code>: Your AWS Secret Access Key</li>
+              <li className="ml-4">• <code>VITE_AWS_REGION</code>: Your AWS region (e.g., us-east-1)</li>
+              <li>Redeploy the application to apply changes</li>
+            </ol>
           </div>
         </div>
       </Card>
