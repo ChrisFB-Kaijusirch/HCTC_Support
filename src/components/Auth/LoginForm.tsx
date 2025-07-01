@@ -30,6 +30,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
         // Admin login - check against database users
         try {
           const adminUsers = await dynamoDBService.scan('holdings-ctc-admin-users');
+          console.log('Admin users found:', adminUsers.length);
+          console.log('Admin users:', adminUsers);
+          console.log('Login attempt:', { emailOrUsername, password: '***', userType });
           
           // If no admin users exist, create a default one (first-time setup)
           if (adminUsers.length === 0 && emailOrUsername === 'setup' && password === 'setup123') {
@@ -49,13 +52,30 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             return;
           }
           
-          const validAdmin = adminUsers.find((admin: any) => 
-            (admin.username === emailOrUsername || admin.email === emailOrUsername) && 
-            admin.password === password &&
-            admin.status === 'active'
-          );
+          const validAdmin = adminUsers.find((admin: any) => {
+            const usernameMatch = admin.username === emailOrUsername;
+            const emailMatch = admin.email === emailOrUsername;
+            const passwordMatch = admin.password === password;
+            const statusMatch = admin.status === 'active';
+            
+            console.log('Checking admin:', {
+              username: admin.username,
+              email: admin.email,
+              usernameMatch,
+              emailMatch,
+              passwordMatch,
+              statusMatch,
+              inputEmail: emailOrUsername,
+              inputPassword: '***'
+            });
+            
+            return (usernameMatch || emailMatch) && passwordMatch && statusMatch;
+          });
+
+          console.log('Valid admin found:', !!validAdmin);
 
           if (validAdmin) {
+            console.log('Login successful for:', validAdmin.username);
             // Simulate successful login
             await new Promise(resolve => setTimeout(resolve, 1000));
             navigate('/admin/dashboard');
@@ -69,7 +89,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
           }
         } catch (error) {
           console.error('Admin login error:', error);
-          setError('Login service unavailable');
+          
+          // Fallback: if AWS is not working, allow hardcoded login for emergency access
+          if (emailOrUsername === 'admin' && password === 'admin123') {
+            console.log('Using emergency fallback login');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            navigate('/admin/dashboard');
+          } else if (emailOrUsername === 'Kaijusirch' && password === 'AkG3Da9SY##51CW#') {
+            console.log('Using emergency Kaijusirch login');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            navigate('/admin/dashboard');
+          } else {
+            setError(`Login service unavailable: ${error.message}`);
+          }
         }
       } else {
         // Client login flow with 2FA
