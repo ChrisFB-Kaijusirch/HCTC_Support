@@ -38,6 +38,8 @@ jobs:
         VITE_AWS_REGION: ${{ secrets.VITE_AWS_REGION }}
         VITE_AWS_ACCESS_KEY_ID: ${{ secrets.VITE_AWS_ACCESS_KEY_ID }}
         VITE_AWS_SECRET_ACCESS_KEY: ${{ secrets.VITE_AWS_SECRET_ACCESS_KEY }}
+        VITE_EMERGENCY_ADMIN_USERNAME: ${{ secrets.EMERGENCY_ADMIN_USERNAME }}
+        VITE_EMERGENCY_ADMIN_PASSWORD: ${{ secrets.EMERGENCY_ADMIN_PASSWORD }}
     
     - name: List build output
       run: ls -la dist
