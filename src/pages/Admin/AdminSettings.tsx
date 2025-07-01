@@ -5,7 +5,7 @@ import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
 import CredentialManager from '../../components/Admin/CredentialManager';
 import { AlertCircle, CheckCircle, Settings, Shield, Users, Database, Key } from 'lucide-react';
-import { hybridDynamoDBService } from '../../services/hybridDynamoDB';
+import { dynamoDBService } from '../../services/dynamodb';
 import { TABLE_NAMES } from '../../config/aws';
 
 interface AdminUser {
@@ -73,7 +73,7 @@ export default function AdminSettings() {
 
       // Try to save to DynamoDB, but don't fail if AWS is not configured
       try {
-        await hybridDynamoDBService.create(TABLE_NAMES.ADMIN_USERS, adminUser);
+        await dynamoDBService.create(TABLE_NAMES.ADMIN_USERS, adminUser);
         setMessage({ type: 'success', text: 'Password updated successfully!' });
       } catch (awsError) {
         console.warn('AWS operation failed, using mock mode:', awsError);
@@ -106,7 +106,7 @@ export default function AdminSettings() {
 
       // Try to save to DynamoDB, but don't fail if AWS is not configured
       try {
-        await hybridDynamoDBService.create(TABLE_NAMES.ADMIN_USERS, newAdmin);
+        await dynamoDBService.create(TABLE_NAMES.ADMIN_USERS, newAdmin);
         setMessage({ type: 'success', text: 'Admin user created successfully!' });
       } catch (awsError) {
         console.warn('AWS operation failed, using mock mode:', awsError);
