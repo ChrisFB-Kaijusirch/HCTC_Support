@@ -24,6 +24,7 @@ export const TABLE_NAMES = {
   FEATURE_REQUESTS: import.meta.env.VITE_DYNAMODB_FEATURE_REQUESTS_TABLE || 'holdings-ctc-feature-requests',
   KNOWLEDGE_BASE: import.meta.env.VITE_DYNAMODB_KNOWLEDGE_BASE_TABLE || 'holdings-ctc-knowledge-base',
   USERS: import.meta.env.VITE_DYNAMODB_USERS_TABLE || 'holdings-ctc-users',
+  ADMIN_USERS: import.meta.env.VITE_DYNAMODB_ADMIN_USERS_TABLE || 'holdings-ctc-admin-users',
   RECENT_UPDATES: import.meta.env.VITE_DYNAMODB_RECENT_UPDATES_TABLE || 'holdings-ctc-recent-updates',
   POPULAR_TOPICS: import.meta.env.VITE_DYNAMODB_POPULAR_TOPICS_TABLE || 'holdings-ctc-popular-topics',
   INVOICES: import.meta.env.VITE_DYNAMODB_INVOICES_TABLE || 'holdings-ctc-invoices',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dynamoDBService } from '../services/dynamodb';
+import { hybridDynamoDBService } from '../services/hybridDynamoDB';
 import { Client, Ticket, App, FeatureRequest, KnowledgeBaseArticle } from '../types';
 
 // Custom hook for clients
@@ -11,7 +11,7 @@ export const useClients = () => {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const data = await dynamoDBService.getAllClients();
+      const data = await hybridDynamoDBService.getAllClients();
       setClients(data);
       setError(null);
     } catch (err) {
@@ -23,7 +23,7 @@ export const useClients = () => {
 
   const createClient = async (client: Omit<Client, 'id'>) => {
     try {
-      const newClient = await dynamoDBService.createClient({
+      const newClient = await hybridDynamoDBService.createClient({
         ...client,
         id: `client_${Date.now()}`,
       } as Client);
@@ -37,7 +37,7 @@ export const useClients = () => {
 
   const updateClient = async (clientId: string, updates: Partial<Client>) => {
     try {
-      const updatedClient = await dynamoDBService.updateClient(clientId, updates);
+      const updatedClient = await hybridDynamoDBService.updateClient(clientId, updates);
       setClients(prev => prev.map(c => c.id === clientId ? updatedClient : c));
       return updatedClient;
     } catch (err) {
@@ -69,7 +69,7 @@ export const useTickets = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const data = await dynamoDBService.getAllTickets();
+      const data = await hybridDynamoDBService.getAllTickets();
       setTickets(data);
       setError(null);
     } catch (err) {
@@ -81,7 +81,7 @@ export const useTickets = () => {
 
   const createTicket = async (ticket: Omit<Ticket, 'id'>) => {
     try {
-      const newTicket = await dynamoDBService.createTicket({
+      const newTicket = await hybridDynamoDBService.createTicket({
         ...ticket,
         id: `ticket_${Date.now()}`,
       } as Ticket);
@@ -95,7 +95,7 @@ export const useTickets = () => {
 
   const updateTicket = async (ticketId: string, updates: Partial<Ticket>) => {
     try {
-      const updatedTicket = await dynamoDBService.updateTicket(ticketId, updates);
+      const updatedTicket = await hybridDynamoDBService.updateTicket(ticketId, updates);
       setTickets(prev => prev.map(t => t.id === ticketId ? updatedTicket : t));
       return updatedTicket;
     } catch (err) {
@@ -127,7 +127,7 @@ export const useApps = () => {
   const fetchApps = async () => {
     try {
       setLoading(true);
-      const data = await dynamoDBService.getAllApps();
+      const data = await hybridDynamoDBService.getAllApps();
       setApps(data);
       setError(null);
     } catch (err) {
@@ -139,7 +139,7 @@ export const useApps = () => {
 
   const createApp = async (app: Omit<App, 'id'>) => {
     try {
-      const newApp = await dynamoDBService.createApp({
+      const newApp = await hybridDynamoDBService.createApp({
         ...app,
         id: `app_${Date.now()}`,
       } as App);
@@ -153,7 +153,7 @@ export const useApps = () => {
 
   const updateApp = async (appId: string, updates: Partial<App>) => {
     try {
-      const updatedApp = await dynamoDBService.updateApp(appId, updates);
+      const updatedApp = await hybridDynamoDBService.updateApp(appId, updates);
       setApps(prev => prev.map(a => a.id === appId ? updatedApp : a));
       return updatedApp;
     } catch (err) {
@@ -185,7 +185,7 @@ export const useFeatureRequests = () => {
   const fetchFeatureRequests = async () => {
     try {
       setLoading(true);
-      const data = await dynamoDBService.getAllFeatureRequests();
+      const data = await hybridDynamoDBService.getAllFeatureRequests();
       setFeatureRequests(data);
       setError(null);
     } catch (err) {
@@ -197,7 +197,7 @@ export const useFeatureRequests = () => {
 
   const createFeatureRequest = async (request: Omit<FeatureRequest, 'id'>) => {
     try {
-      const newRequest = await dynamoDBService.createFeatureRequest({
+      const newRequest = await hybridDynamoDBService.createFeatureRequest({
         ...request,
         id: `request_${Date.now()}`,
       } as FeatureRequest);
@@ -231,7 +231,7 @@ export const useKnowledgeBase = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const data = await dynamoDBService.getAllKnowledgeBaseArticles();
+      const data = await hybridDynamoDBService.getAllKnowledgeBaseArticles();
       setArticles(data);
       setError(null);
     } catch (err) {
@@ -243,7 +243,7 @@ export const useKnowledgeBase = () => {
 
   const createArticle = async (article: Omit<KnowledgeBaseArticle, 'id'>) => {
     try {
-      const newArticle = await dynamoDBService.createKnowledgeBaseArticle({
+      const newArticle = await hybridDynamoDBService.createKnowledgeBaseArticle({
         ...article,
         id: `article_${Date.now()}`,
       } as KnowledgeBaseArticle);

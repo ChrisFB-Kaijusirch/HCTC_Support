@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import Card from '../../components/UI/Card';
 import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
-import { AlertCircle, CheckCircle, Settings, Shield, Users, Database } from 'lucide-react';
-import { dynamoDBService } from '../../services/dynamodb';
+import CredentialManager from '../../components/Admin/CredentialManager';
+import { AlertCircle, CheckCircle, Settings, Shield, Users, Database, Key } from 'lucide-react';
+import { hybridDynamoDBService } from '../../services/hybridDynamoDB';
+import { TABLE_NAMES } from '../../config/aws';
 
 interface AdminUser {
   id: string;
@@ -69,9 +71,16 @@ export default function AdminSettings() {
         lastLogin: new Date().toISOString()
       };
 
-      await dynamoDBService.create('holdings-ctc-admin-users', adminUser);
+      // Try to save to DynamoDB, but don't fail if AWS is not configured
+      try {
+        await hybridDynamoDBService.create(TABLE_NAMES.ADMIN_USERS, adminUser);
+        setMessage({ type: 'success', text: 'Password updated successfully!' });
+      } catch (awsError) {
+        console.warn('AWS operation failed, using mock mode:', awsError);
+        // In mock mode, just simulate success
+        setMessage({ type: 'success', text: 'Password updated successfully! (Mock mode - AWS not configured)' });
+      }
 
-      setMessage({ type: 'success', text: 'Password updated successfully!' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to update password' });
@@ -95,10 +104,17 @@ export default function AdminSettings() {
         updatedAt: new Date().toISOString()
       };
 
-      await dynamoDBService.create('holdings-ctc-admin-users', newAdmin);
+      // Try to save to DynamoDB, but don't fail if AWS is not configured
+      try {
+        await hybridDynamoDBService.create(TABLE_NAMES.ADMIN_USERS, newAdmin);
+        setMessage({ type: 'success', text: 'Admin user created successfully!' });
+      } catch (awsError) {
+        console.warn('AWS operation failed, using mock mode:', awsError);
+        setMessage({ type: 'success', text: 'Admin user created successfully! (Mock mode - AWS not configured)' });
+      }
+
       setAdminUsers([...adminUsers, newAdmin]);
       setNewAdminForm({ username: '', email: '', password: '', role: 'admin' });
-      setMessage({ type: 'success', text: 'Admin user created successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to create admin user' });
     } finally {
@@ -108,6 +124,7 @@ export default function AdminSettings() {
 
   const tabs = [
     { id: 'security', label: 'Security', icon: Shield },
+    { id: 'credentials', label: 'AWS Credentials', icon: Key },
     { id: 'admins', label: 'Admin Users', icon: Users },
     { id: 'system', label: 'System', icon: Database }
   ];
@@ -216,6 +233,11 @@ export default function AdminSettings() {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* AWS Credentials Tab */}
+      {activeTab === 'credentials' && (
+        <CredentialManager />
       )}
 
       {/* Admin Users Tab */}

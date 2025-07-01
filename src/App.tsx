@@ -1,24 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
-import Home from './pages/Home';
-import SubmitTicket from './pages/SubmitTicket';
-import TrackTicket from './pages/TrackTicket';
-import KnowledgeBase from './pages/KnowledgeBase';
-import KnowledgeBaseArticle from './pages/KnowledgeBaseArticle';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import ClientManagement from './pages/Admin/ClientManagement';
-import AppManagement from './pages/Admin/AppManagement';
-import ContentManagement from './pages/Admin/ContentManagement';
-import InvoiceManagement from './pages/Admin/InvoiceManagement';
-import AdminSettings from './pages/Admin/AdminSettings';
-import UserAccessControl from './pages/Admin/UserAccessControl';
-import ClientDashboard from './pages/Client/ClientDashboard';
-import UserManagement from './pages/Client/UserManagement';
-import Billing from './pages/Client/Billing';
-import FeatureRequestsList from './pages/FeatureRequests/FeatureRequestsList';
-import LoginForm from './components/Auth/LoginForm';
-import QRSetup from './components/Auth/QRSetup';
+import { allRoutes } from './config/routes';
 import './index.css';
 
 function App() {
@@ -31,40 +14,25 @@ function App() {
   return (
     <Router basename="/HCTC_Support">
       <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/submit-ticket" element={<SubmitTicket />} />
-          <Route path="/track-ticket" element={<TrackTicket />} />
-          <Route path="/knowledge-base" element={<KnowledgeBase />} />
-          <Route path="/knowledge-base/:id" element={<KnowledgeBaseArticle />} />
-          <Route path="/feature-requests" element={<FeatureRequestsList />} />
-          
-          {/* Auth Routes */}
-          <Route 
-            path="/admin/login" 
-            element={<LoginForm userType="admin" onLogin={handleLogin} />} 
-          />
-          <Route 
-            path="/client/login" 
-            element={<LoginForm userType="client" onLogin={handleLogin} />} 
-          />
-          <Route path="/qr-setup" element={<QRSetup />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/clients" element={<ClientManagement />} />
-          <Route path="/admin/apps" element={<AppManagement />} />
-          <Route path="/admin/content" element={<ContentManagement />} />
-          <Route path="/admin/invoices" element={<InvoiceManagement />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/users" element={<UserAccessControl />} />
-          
-          {/* Client Routes */}
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
-          <Route path="/client/users" element={<UserManagement />} />
-          <Route path="/client/billing" element={<Billing />} />
-        </Routes>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        }>
+          <Routes>
+            {allRoutes.map((route, index) => (
+              <Route 
+                key={index} 
+                path={route.path} 
+                element={
+                  React.isValidElement(route.element) && route.element.type.name === 'LoginForm'
+                    ? React.cloneElement(route.element as React.ReactElement, { onLogin: handleLogin })
+                    : route.element
+                } 
+              />
+            ))}
+          </Routes>
+        </Suspense>
       </Layout>
     </Router>
   );

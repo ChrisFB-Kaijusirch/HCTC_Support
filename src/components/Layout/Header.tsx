@@ -219,9 +219,12 @@ const Header: React.FC = () => {
             
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <Link 
+                  to={userType === 'admin' ? '/admin/settings' : '/client/dashboard'}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
                   <Settings className="w-5 h-5" />
-                </button>
+                </Link>
                 
                 {/* User Dropdown */}
                 <div className="relative" ref={dropdownRef}>
@@ -294,13 +297,14 @@ const Header: React.FC = () => {
                         </>
                       )}
                       
-                      <button
+                      <Link
+                        to={userType === 'admin' ? '/admin/settings' : '/client/dashboard'}
                         onClick={() => setShowUserDropdown(false)}
                         className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
-                      </button>
+                      </Link>
                       
                       <div className="border-t border-gray-100 mt-1 pt-1">
                         <button
