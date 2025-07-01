@@ -20,41 +20,25 @@ import {
   QRCodeData
 } from '../types';
 
-// Fallback to mock data if AWS is not configured
-import { 
-  mockClients, 
-  mockTickets, 
-  mockApps, 
-  mockFeatureRequests, 
-  mockKnowledgeBase, 
-  mockUsers 
-} from '../utils/mockData';
-
 class DynamoDBService {
-  private useMockData = !isAWSConfigured();
-
   constructor() {
-    console.log('Environment check:', {
+    console.log('AWS Configuration check:', {
       VITE_AWS_ACCESS_KEY_ID: import.meta.env.VITE_AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET',
       VITE_AWS_SECRET_ACCESS_KEY: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET',
       VITE_AWS_REGION: import.meta.env.VITE_AWS_REGION || 'NOT SET',
       isAWSConfigured: isAWSConfigured(),
-      useMockData: this.useMockData
+      dynamoDBDocClient: !!dynamoDBDocClient
     });
     
-    if (this.useMockData) {
-      console.warn('AWS not configured. Using mock data for development.');
-    } else {
-      console.log('AWS configured successfully. Using real AWS DynamoDB.');
+    if (!isAWSConfigured() || !dynamoDBDocClient) {
+      throw new Error('AWS DynamoDB not properly configured. Please set VITE_AWS_ACCESS_KEY_ID, VITE_AWS_SECRET_ACCESS_KEY, and VITE_AWS_REGION environment variables.');
     }
+    
+    console.log('AWS DynamoDB configured successfully.');
   }
 
   // Generic CRUD operations
   async create<T>(tableName: string, item: T): Promise<T> {
-    if (this.useMockData) {
-      return item; // Mock implementation
-    }
-
     console.log('Creating item in table:', tableName, 'Item:', item);
     try {
       const command = new PutCommand({
@@ -62,7 +46,7 @@ class DynamoDBService {
         Item: item,
       });
       console.log('Sending PutCommand:', command);
-      const result = await dynamoDBDocClient.send(command);
+      const result = await dynamoDBDocClient!.send(command);
       console.log('PutCommand result:', result);
       return item;
     } catch (error) {
@@ -73,12 +57,8 @@ class DynamoDBService {
   }
 
   async get<T>(tableName: string, key: Record<string, any>): Promise<T | null> {
-    if (this.useMockData) {
-      return null; // Mock implementation
-    }
-
     try {
-      const result = await dynamoDBDocClient.send(new GetCommand({
+      const result = await dynamoDBDocClient!.send(new GetCommand({
         TableName: tableName,
         Key: key,
       }));
@@ -90,10 +70,6 @@ class DynamoDBService {
   }
 
   async update<T>(tableName: string, key: Record<string, any>, updates: Partial<T>): Promise<T> {
-    if (this.useMockData) {
-      return updates as T; // Mock implementation
-    }
-
     try {
       const updateExpression = Object.keys(updates)
         .map(key => `#${key} = :${key}`)
@@ -105,7 +81,7 @@ class DynamoDBService {
       const expressionAttributeValues = Object.entries(updates)
         .reduce((acc, [key, value]) => ({ ...acc, [`:${key}`]: value }), {});
 
-      const result = await dynamoDBDocClient.send(new UpdateCommand({
+      const result = await dynamoDBDocClient!.send(new UpdateCommand({
         TableName: tableName,
         Key: key,
         UpdateExpression: `SET ${updateExpression}`,
@@ -122,12 +98,8 @@ class DynamoDBService {
   }
 
   async delete(tableName: string, key: Record<string, any>): Promise<void> {
-    if (this.useMockData) {
-      return; // Mock implementation
-    }
-
     try {
-      await dynamoDBDocClient.send(new DeleteCommand({
+      await dynamoDBDocClient!.send(new DeleteCommand({
         TableName: tableName,
         Key: key,
       }));
@@ -138,50 +110,8 @@ class DynamoDBService {
   }
 
   async scan<T>(tableName: string, filters?: Record<string, any>): Promise<T[]> {
-    if (this.useMockData) {
-      // Return mock data based on table name
-      switch (tableName) {
-        case TABLE_NAMES.CLIENTS: return mockClients as T[];
-        case TABLE_NAMES.TICKETS: return mockTickets as T[];
-        case TABLE_NAMES.APPS: return mockApps as T[];
-        case TABLE_NAMES.FEATURE_REQUESTS: return mockFeatureRequests as T[];
-        case TABLE_NAMES.KNOWLEDGE_BASE: return mockKnowledgeBase as T[];
-        case TABLE_NAMES.USERS: return mockUsers as T[];
-        case 'holdings-ctc-admin-users': 
-          // Return mock admin users for login
-          return [
-            {
-              id: 'admin_1',
-              username: 'admin',
-              email: 'admin@hctc.com',
-              password: 'YLRq%ZzU7CIBxLPI',
-              role: 'super_admin',
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              permissions: ['all']
-            },
-            {
-              id: 'admin_2',
-              username: 'Kaijusirch',
-              email: 'kaijusirch@hctc.com',
-              password: 'AkG3Da9SY##51CW#',
-              role: 'super_admin',
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              permissions: ['all']
-            }
-          ] as T[];
-        default: return [];
-      }
-    }
-
-    if (!dynamoDBDocClient) {
-      console.error('DynamoDB client not configured, but attempting to scan real table');
-      throw new Error('AWS DynamoDB not configured');
-    }
-
     try {
-      const result = await dynamoDBDocClient.send(new ScanCommand({
+      const result = await dynamoDBDocClient!.send(new ScanCommand({
         TableName: tableName,
         FilterExpression: filters ? Object.keys(filters).map(key => `#${key} = :${key}`).join(' AND ') : undefined,
         ExpressionAttributeNames: filters ? Object.keys(filters).reduce((acc, key) => ({ ...acc, [`#${key}`]: key }), {}) : undefined,

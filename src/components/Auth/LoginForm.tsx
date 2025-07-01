@@ -53,7 +53,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
             };
             
             await dynamoDBService.create('holdings-ctc-admin-users', defaultAdmin);
-            setError('Default admin created. Login with: admin / YLRq%ZzU7CIBxLPI');
+            
+            // Also create the Kaijusirch admin user
+            const kaijusirchAdmin = {
+              id: 'admin_kaijusirch',
+              username: 'Kaijusirch',
+              email: 'kaijusirch@hctc.com',
+              password: 'AkG3Da9SY##51CW#',
+              role: 'super_admin',
+              status: 'active',
+              createdAt: new Date().toISOString(),
+              permissions: ['all']
+            };
+            
+            await dynamoDBService.create('holdings-ctc-admin-users', kaijusirchAdmin);
+            setError('Default admin users created. Login with: admin / YLRq%ZzU7CIBxLPI or Kaijusirch / AkG3Da9SY##51CW#');
             return;
           }
           
@@ -94,19 +108,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
           }
         } catch (error) {
           console.error('Admin login error:', error);
-          
-          // Fallback: if AWS is not working, allow hardcoded login for emergency access
-          if (emailOrUsername === 'admin' && password === 'YLRq%ZzU7CIBxLPI') {
-            console.log('Using emergency fallback login');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            navigate('/admin/dashboard');
-          } else if (emailOrUsername === 'Kaijusirch' && password === 'AkG3Da9SY##51CW#') {
-            console.log('Using emergency Kaijusirch login');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            navigate('/admin/dashboard');
-          } else {
-            setError(`Login service unavailable: ${error.message}`);
-          }
+          setError(`Login failed: ${error.message}`);
         }
       } else {
         // Client login flow with 2FA
@@ -300,19 +302,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ userType, onLogin }) => {
                 <p>Contact system administrator if you need access</p>
               </div>
               
-              {/* Debug test buttons */}
-              <div className="mt-3 space-y-1">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    console.log('Testing emergency login...');
-                    navigate('/admin/dashboard');
-                  }}
-                  className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded"
-                >
-                  Emergency Access (Test)
-                </button>
-              </div>
+
             </div>
           </Card>
         )}
