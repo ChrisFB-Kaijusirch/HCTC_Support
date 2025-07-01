@@ -2,19 +2,38 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 // AWS Configuration
-const awsConfig = {
-  region: import.meta.env.VITE_AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
-  },
+const createAWSConfig = () => {
+  const region = import.meta.env.VITE_AWS_REGION || 'ap-southeast-2';
+  const accessKeyId = import.meta.env.VITE_AWS_ACCESS_KEY_ID || '';
+  const secretAccessKey = import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '';
+
+  if (!accessKeyId || !secretAccessKey) {
+    console.warn('AWS credentials not found in environment variables');
+    return null;
+  }
+
+  return {
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  };
 };
 
-// Create DynamoDB client
-const dynamoDBClient = new DynamoDBClient(awsConfig);
+// Create DynamoDB client with error handling
+let dynamoDBClient: DynamoDBClient | null = null;
+try {
+  const config = createAWSConfig();
+  if (config) {
+    dynamoDBClient = new DynamoDBClient(config);
+  }
+} catch (error) {
+  console.error('Failed to create DynamoDB client:', error);
+}
 
 // Create DynamoDB Document client for easier operations
-export const dynamoDBDocClient = DynamoDBDocumentClient.from(dynamoDBClient);
+export const dynamoDBDocClient = dynamoDBClient ? DynamoDBDocumentClient.from(dynamoDBClient) : null;
 
 // Table names from environment variables
 export const TABLE_NAMES = {
