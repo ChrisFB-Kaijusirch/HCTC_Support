@@ -8,14 +8,12 @@ This guide will help you set up secure credential management after the GitGuardi
 
 You need to set up these secrets in your GitHub repository:
 
-### AWS Credentials
+### AWS Credentials (Only 3 Required)
 1. `VITE_AWS_ACCESS_KEY_ID` - Your AWS Access Key ID
 2. `VITE_AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key  
 3. `VITE_AWS_REGION` - Your AWS region (e.g., `us-east-1`, `ap-southeast-2`)
 
-### Admin Passwords
-4. `VITE_DEFAULT_ADMIN_PASSWORD` - Password for the 'admin' user
-5. `VITE_KAIJUSIRCH_PASSWORD` - Password for the 'Kaijusirch' user
+**Note:** Admin passwords are stored in the DynamoDB admin users table, not as separate secrets.
 
 ## 📋 Step-by-Step Setup
 
@@ -46,8 +44,6 @@ Generate strong passwords for your admin accounts. Example:
    | `VITE_AWS_ACCESS_KEY_ID` | `AKIA...` | Your AWS Access Key |
    | `VITE_AWS_SECRET_ACCESS_KEY` | `wJalrXU...` | Your AWS Secret Key |
    | `VITE_AWS_REGION` | `us-east-1` | Your AWS Region |
-   | `VITE_DEFAULT_ADMIN_PASSWORD` | `MySecure!Pass123` | Admin user password |
-   | `VITE_KAIJUSIRCH_PASSWORD` | `Another!Secure456` | Kaijusirch user password |
 
 ### 3. AWS Setup
 
@@ -68,8 +64,8 @@ After deployment with secrets configured:
 
 1. **Visit your deployed site**
 2. **Use setup credentials**: `setup` / `setup123`
-3. **This creates admin users with your secure passwords**
-4. **Login with**: `admin` / `[your VITE_DEFAULT_ADMIN_PASSWORD]`
+3. **This creates admin users in DynamoDB**
+4. **Login with**: `admin` / `AdminSecure2025!` or `Kaijusirch` / `KaijuSecure2025!`
 
 ### 5. Test Connection
 
