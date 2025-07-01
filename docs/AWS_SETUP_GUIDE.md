@@ -169,7 +169,7 @@ npm run dev
 1. Open your browser to the URL shown (usually `http://localhost:5173`)
 2. Try logging in as admin:
    - **Username**: `admin`
-   - **Password**: `admin123`
+   - **Password**: Set via environment variables
 3. Navigate to different sections to ensure everything works
 
 ---
@@ -271,7 +271,7 @@ If you encounter issues:
 - [ ] Dependencies installed (`npm install`)
 - [ ] DynamoDB tables created (`node src/scripts/setup-dynamodb-tables.js`)
 - [ ] Application started (`npm run dev`)
-- [ ] Admin login tested (admin/admin123)
+- [ ] Admin login tested (admin/password_from_env_vars)
 - [ ] Billing alerts configured
 
 **Congratulations! Your Holdings CTC Support Portal is now connected to AWS DynamoDB! 🎉**

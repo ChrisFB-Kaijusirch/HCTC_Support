@@ -33,7 +33,7 @@ npm run dev
 ```
 
 ### 4. Test Login
-- **Admin**: username: `admin`, password: `admin123`
+- **Admin**: username: `admin`, password: Set via GitHub Secrets (VITE_DEFAULT_ADMIN_PASSWORD)
 - **Client**: email: `john@techcorp.com`, any password
 
 ## 🎯 That's it! Your app is now connected to AWS DynamoDB!

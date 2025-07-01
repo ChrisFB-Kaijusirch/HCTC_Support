@@ -7,7 +7,7 @@ A comprehensive client support portal for managing technical support requests, f
 ### Admin Access
 - **URL**: `/admin/login`
 - **Username**: `admin`
-- **Password**: `admin123`
+- **Password**: Set via environment variables (see GitHub Secrets)
 - **Features**: No 2FA required for admin login
 
 ### Client Access

@@ -205,7 +205,7 @@ When everything is working correctly:
 - [ ] Table setup script runs successfully
 - [ ] 6 tables visible in AWS DynamoDB console
 - [ ] App starts without errors (`npm run dev`)
-- [ ] Admin login works (admin/admin123)
+- [ ] Admin login works (admin/password_from_github_secrets)
 - [ ] No AWS-related errors in browser console
 - [ ] App shows real data instead of "mock data" messages
 
